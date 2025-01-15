@@ -1,0 +1,9 @@
+{
+    "resourceType": "Patient",
+    "id": "{{id}}",
+    "name": [],
+    "address": [],
+    "telecom": [],
+    "gender": "{{gender}}",
+    "birthDate": "{{date_of_birth}}"
+}
