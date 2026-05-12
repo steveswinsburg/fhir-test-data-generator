@@ -68,6 +68,27 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
                 }
             )
 
+        suppressed_by_code = ctx.csv_value(row, "suppressedBy.code")
+        include_self = ctx.csv_value(row, "suppressed.includeSelf")
+        if suppressed_by_code != "":
+            suppressed_extension = {
+                "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/suppressed",
+                "extension": [
+                    {
+                        "url": "suppressedBy",
+                        "valueCodeableConcept": {
+                            "coding": [
+                                {
+                                    "system": "http://digitalhealth.gov.au/fhir/cc/CodeSystem/suppressed-cs",
+                                    "code": suppressed_by_code,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+            extensions.append(suppressed_extension)
+
         available_time = []
         for index in range(1, 6):
             day = ctx.csv_value(row, f"availableTime{index}.daysOfWeek")

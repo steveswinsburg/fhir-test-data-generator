@@ -33,7 +33,35 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
             {"type": {"text": "ABN"}, "system": "http://hl7.org.au/id/abn", "value": ctx.csv_value(row, "identifier.abn.value")},
             {"type": {"text": "ACN"}, "system": "http://hl7.org.au/id/acn", "value": ctx.csv_value(row, "identifier.acn.value")},
         ]
-
+		
+        suppressed_by_code = ctx.csv_value(row, "suppressedBy.code")
+        include_self = ctx.csv_value(row, "suppressed.includeSelf")
+        if suppressed_by_code != "":
+            suppressed_extension = {
+                "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/suppressed",
+                "extension": [
+                    {
+                        "url": "suppressedBy",
+                        "valueCodeableConcept": {
+                            "coding": [
+                                {
+                                    "system": "http://digitalhealth.gov.au/fhir/cc/CodeSystem/suppressed-cs",
+                                    "code": suppressed_by_code,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+            if include_self != "":
+                suppressed_extension["extension"][0]["valueCodeableConcept"]["coding"].append(
+                    {
+                        "url": "includeSelf",
+                        "valueBoolean": include_self,
+                    }
+                )
+            identifiers.append(suppressed_extension)
+          
         telecom = []
         for index in range(1, 7):
             system = ctx.token_value(row, f"telecom.system{index}")

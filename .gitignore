@@ -2,3 +2,4 @@ generated
 output
 venv
 IGs
+**/__pycache__
