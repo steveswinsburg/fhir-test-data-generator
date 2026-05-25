@@ -30,6 +30,16 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                 "system": "http://ns.electronichealth.net.au/id/hi/hpio/1.0",
                 "value": ctx.csv_value(row, "identifier.hpio.value"),
             },
+            {
+                "extension": [
+                    {
+                        "url": "http://digitalhealth.gov.au/fhir/hcpd/StructureDefinition/hc-org-classification",
+                    }
+                ],
+                "type": {"text": "HSPO", "coding": [{"system": "http://terminology.hl7.org.au/CodeSystem/v2-0203", "code": "NOI"}]},
+                "system": "http://ns.electronichealth.net.au/id/hi/hspo/1.0",
+                "value": ctx.csv_value(row, "identifier.hspo.value"),
+            },
             {"type": {"text": "ABN"}, "system": "http://hl7.org.au/id/abn", "value": ctx.csv_value(row, "identifier.abn.value")},
             {"type": {"text": "ACN"}, "system": "http://hl7.org.au/id/acn", "value": ctx.csv_value(row, "identifier.acn.value")},
         ]
@@ -89,6 +99,11 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                     "country": ctx.csv_value(row, "address.country"),
                 }
             ],
+            "type": {"coding": [{
+                "system": ctx.csv_value(row, "type.system"),
+                "code": ctx.csv_value(row, "type.code"),
+                "display": ctx.csv_value(row, "type.display"),
+            }]},
         }
         return ctx.clean(organization)
 

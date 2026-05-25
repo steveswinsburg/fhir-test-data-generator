@@ -44,6 +44,7 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
             "identifier": [{"system": ctx.csv_value(row, "identifier.system"), "value": ctx.csv_value(row, "identifier.value")}],
             "providedBy": {"reference": ctx.csv_value(row, "providedBy.reference")},
             "type": [{"coding": [{"system": ctx.csv_value(row, "type.system"), "code": ctx.csv_value(row, "type.code"), "display": ctx.csv_value(row, "type.display")}]}],
+            "communication": [{"coding": [{"code": ctx.csv_value(row, "communication.code"), "display": ctx.csv_value(row, "communication.display")}]}],
             "location": [{"reference": ctx.csv_value(row, "location.reference")}],
             "name": ctx.csv_value(row, "name"),
             "appointmentRequired": ctx.bool_value(ctx.csv_value(row, "appointmentRequired")),
