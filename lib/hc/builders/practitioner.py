@@ -34,6 +34,23 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                 }
             )
 
+        ahpra_value = ctx.csv_value(row, "identifier.ahpra.value")
+        if ahpra_value:
+            identifiers.append(
+                {
+                    "type": {
+                        "coding": [
+                            {
+                                "system": "http://terminology.hl7.org.au/CodeSystem/v2-0203",
+                                "code": "AHPRA",
+                            }
+                        ]
+                    },
+                    "system": "http://hl7.org.au/id/ahpra-registration-number",
+                    "value": ahpra_value,
+                }
+            )
+
         telecom = []
         for index in (1, 2):
             system = ctx.csv_value(row, f"telecom{index}.system")

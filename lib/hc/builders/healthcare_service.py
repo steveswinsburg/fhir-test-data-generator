@@ -60,6 +60,7 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
                     "_availableEndTime": end_extension,
                 }
             ],
+            "serviceProvisionCode": [{"coding": [{"system": ctx.csv_value(row, "serviceProvisionCode.system"), "code": ctx.csv_value(row, "serviceProvisionCode.code"), "display": ctx.csv_value(row, "serviceProvisionCode.display")}]}],
         }
         return ctx.clean(healthcare_service)
 

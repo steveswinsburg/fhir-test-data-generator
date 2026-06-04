@@ -130,6 +130,9 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
             "telecom": telecom,
             "availableTime": available_time,
         }
+        endpoint_ref = ctx.csv_value(row, "endpoint.reference")
+        if endpoint_ref:
+            practitioner_role["endpoint"] = [{"reference": endpoint_ref}]
         return ctx.clean(practitioner_role)
 
     def build_bulk(self, index):
