@@ -82,6 +82,20 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             "managingOrganization": {"reference": ctx.csv_value(row, "managingOrganization")},
             "extension": [preferred_postal],
         }
+        amenity_code = ctx.csv_value(row, "amenity.code")
+        if amenity_code:
+            location["extension"].append({
+                "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/amenity",
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": ctx.csv_value(row, "amenity.system"),
+                            "code": amenity_code,
+                            "display": ctx.csv_value(row, "amenity.display"),
+                        }
+                    ]
+                },
+            })
         return ctx.clean(location)
 
     def build_bulk(self, index):
