@@ -15,6 +15,16 @@ pip3 install -r requirements.txt
 Running the script will generate resources based on the selected IG, type, and mode.
 Generated resources will be written to the selected IG output directory.
 
+The CLI now supports subcommands:
+
+`python3 generate.py generate ...` to run generation
+
+`python3 generate.py list [--ig <ig>]` to inspect supported IGs and resource types
+
+`python3 generate.py doctor` to validate the expected input/output folder layout
+
+Backward compatibility is preserved, so existing commands without the `generate` subcommand still work.
+
 ### CSV mode
 
 CSV mode reads CSV files from the selected IG input directory and writes FHIR resources to `output/<ig-name>/csv/`.
@@ -22,9 +32,9 @@ If `--type` is omitted, the generator scans the IG input directory and generates
 
 Examples:
 
-`python3 generate.py --ig au-core-2.0.0 --mode csv`
+`python3 generate.py generate --ig au-core-2.0.0 --mode csv`
 
-`python3 generate.py --ig au-core-2.0.0 --type observation --mode csv`
+`python3 generate.py generate --ig au-core-2.0.0 --type observation --mode csv`
 
 ### Bulk mode
 
@@ -34,9 +44,17 @@ If `--type` is omitted, bulk mode generates all supported resource types for the
 
 Examples:
 
-`python3 generate.py --ig hcpd-26.0.0 --mode bulk --count 100`
+`python3 generate.py generate --ig hcpd-26.0.0 --mode bulk --count 100`
 
-`python3 generate.py --ig au-core-2.0.0 --type patient --mode bulk --count 1000 --seed 42`
+`python3 generate.py generate --ig au-core-2.0.0 --type patient --mode bulk --count 1000 --seed 42`
+
+### Discovery and diagnostics
+
+`python3 generate.py list`
+
+`python3 generate.py list --ig hcpd-26.0.0`
+
+`python3 generate.py doctor`
 
 ### CLI switches
 
