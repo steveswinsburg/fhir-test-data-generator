@@ -47,11 +47,10 @@ def ensure_ig_layout(ig):
     output_csv_dir = os.path.join(output_root, "csv")
     output_bulk_dir = os.path.join(output_root, "bulk")
 
-    missing_dirs = [path for path in [ig_dir, input_dir] if not os.path.isdir(path)]
-    if missing_dirs:
-        missing_display = ", ".join(missing_dirs)
-        raise FileNotFoundError(f"Missing required layout directories for IG '{ig}': {missing_display}")
+    if not os.path.isdir(input_dir):
+        raise FileNotFoundError(f"Missing required input directory for IG '{ig}': {input_dir}")
 
+    os.makedirs(ig_dir, exist_ok=True)
     os.makedirs(output_csv_dir, exist_ok=True)
     os.makedirs(output_bulk_dir, exist_ok=True)
 
