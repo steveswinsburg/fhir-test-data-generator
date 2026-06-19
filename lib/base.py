@@ -3,8 +3,7 @@ import json
 import os
 import random
 import re
-
-from faker import Faker
+import uuid
 
 
 class ProfileContext:
@@ -13,8 +12,21 @@ class ProfileContext:
         self.input_dir = args.input_dir
         self.output_dir = args.output_dir
         self.random = random.Random(args.seed)
-        self.faker = Faker("en_AU")
-        self.faker.seed_instance(args.seed)
+        self._faker = None
+
+    @property
+    def faker(self):
+        if self._faker is None:
+            try:
+                from faker import Faker
+            except ModuleNotFoundError as exc:
+                raise ModuleNotFoundError(
+                    "Faker is required for bulk generation mode. Install it to use --mode bulk."
+                ) from exc
+
+            self._faker = Faker("en_AU")
+            self._faker.seed_instance(self.args.seed)
+        return self._faker
 
     def candidate_input_paths(self, file_name):
         return [os.path.join(self.input_dir, file_name)]

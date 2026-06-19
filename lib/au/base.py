@@ -1,3 +1,5 @@
+import uuid
+
 from lib.base import ProfileContext
 from lib.base import BaseResourceGenerator as _BaseResourceGenerator
 
@@ -189,7 +191,7 @@ class AUCoreContext(ProfileContext):
             if value:
                 return self.slugify(value)
 
-        return self.slugify(self.faker.uuid4())
+        return self.slugify(uuid.uuid4().hex)
 
     def indexed_days(self, row, prefix, max_days=7):
         days = []
