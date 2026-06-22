@@ -163,11 +163,14 @@ def parse_args(argv=None):
         description="Check input and output directories for all configured IGs.",
     )
 
-    args = parser.parse_args(argv)
+    args, unknown = parser.parse_known_args(argv)
 
     # Backward compatibility: allow legacy invocation without explicit subcommand.
     if args.command is None:
-        legacy_parser = argparse.ArgumentParser(add_help=False)
+        legacy_parser = argparse.ArgumentParser(
+            prog="generate.py",
+            description="Generate FHIR resources from CSV input or synthetic bulk generation.",
+        )
         legacy_parser.add_argument("--type")
         legacy_parser.add_argument("--ig", required=True)
         legacy_parser.add_argument("--mode", required=True, choices=["csv", "bulk"])
@@ -177,7 +180,8 @@ def parse_args(argv=None):
         legacy_args.command = "generate"
         return legacy_args
 
-    return args
+    # Now that we have a subcommand, enforce strict parsing for that command.
+    return parser.parse_args(argv)
 
 
 def command_list(args):
