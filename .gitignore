@@ -1,5 +1,6 @@
 generated
 output
 venv
+.venv
 IGs
 **/__pycache__
