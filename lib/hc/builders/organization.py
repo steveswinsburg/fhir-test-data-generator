@@ -104,6 +104,7 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                 "code": ctx.csv_value(row, "type.code"),
                 "display": ctx.csv_value(row, "type.display"),
             }]},
+            "partOf": {"reference": ctx.csv_value(row, "partOf.reference")},
         }
         return ctx.clean(organization)
 

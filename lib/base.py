@@ -27,7 +27,7 @@ class ProfileContext:
         if not file_path:
             raise FileNotFoundError(f"Could not find input file '{file_name}' under '{self.input_dir}'")
         with open(file_path, "r", newline="", encoding="utf-8-sig") as handle:
-            reader = csv.DictReader(handle)
+            reader = csv.DictReader(handle, restval="")
             return list(reader)
 
     def write_json(self, resource_type, resource_id, payload):

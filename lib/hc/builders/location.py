@@ -82,6 +82,9 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             "managingOrganization": {"reference": ctx.csv_value(row, "managingOrganization")},
             "extension": [preferred_postal],
         }
+        endpoint_ref = ctx.csv_value(row, "endpoint.reference")
+        if endpoint_ref:
+            location["endpoint"] = [{"reference": endpoint_ref}]
         amenity_code = ctx.csv_value(row, "amenity.code")
         if amenity_code:
             location["extension"].append({
