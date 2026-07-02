@@ -62,6 +62,9 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
             ],
             "serviceProvisionCode": [{"coding": [{"system": ctx.csv_value(row, "serviceProvisionCode.system"), "code": ctx.csv_value(row, "serviceProvisionCode.code"), "display": ctx.csv_value(row, "serviceProvisionCode.display")}]}],
         }
+        active_value = ctx.csv_value(row, "active")
+        if active_value != "":
+            healthcare_service["active"] = ctx.bool_value(active_value)
         return ctx.clean(healthcare_service)
 
     def build_bulk(self, index):

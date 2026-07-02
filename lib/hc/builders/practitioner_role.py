@@ -130,6 +130,9 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
             "telecom": telecom,
             "availableTime": available_time,
         }
+        active_value = ctx.csv_value(row, "active")
+        if active_value != "":
+            practitioner_role["active"] = ctx.bool_value(active_value)
         endpoint_ref = ctx.csv_value(row, "endpoint.reference")
         if endpoint_ref:
             practitioner_role["endpoint"] = [{"reference": endpoint_ref}]
