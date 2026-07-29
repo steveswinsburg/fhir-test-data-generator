@@ -36,7 +36,7 @@ class AUCorePractitionerGenerator(BaseResourceGenerator):
             "meta": ctx.build_meta(AU_CORE_PRACTITIONER_PROFILE),
             "identifier": [
                 {
-                    "type": ctx.build_identifier_type(code="NPI", text="HPI-I"),
+                    "type": ctx.build_identifier_type(code="NPI", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="HPI-I"),
                     "system": "http://ns.electronichealth.net.au/id/hi/hpii/1.0",
                     "value": f"800361{ctx.random_digits(10)}",
                 }
@@ -51,7 +51,7 @@ class AUCorePractitionerGenerator(BaseResourceGenerator):
             "gender": gender,
             "qualification": [
                 {
-                    "identifier": [{"type": ctx.build_identifier_type(code="AHPRA", text="Ahpra Registration Number"), "system": "http://hl7.org.au/id/ahpra-registration-number", "value": f"HAC{index:09d}"}],
+                    "identifier": [{"type": ctx.build_identifier_type(code="AHPRA", system="http://terminology.hl7.org.au/CodeSystem/v2-0203", text="Ahpra Registration Number"), "system": "http://hl7.org.au/id/ahpra-registration-number", "value": f"HAC{index:09d}"}],
                     "code": {"text": ctx.random.choice(["Medical Practitioner", "Registered Nurse", "Physiotherapist"])},
                     "issuer": {"display": "Australian Health Practitioner Regulation Agency"},
                 }
@@ -67,6 +67,7 @@ class AUCorePractitionerGenerator(BaseResourceGenerator):
             value = ctx.csv_value(row, f"identifier{index}_value")
             identifier_type = ctx.build_identifier_type(
                 code=ctx.csv_value(row, f"identifier{index}_type_code"),
+                system=ctx.csv_value(row, f"identifier{index}_type_system"),
                 display=ctx.csv_value(row, f"identifier{index}_type_display"),
                 text=ctx.csv_value(row, f"identifier{index}_type_text"),
             )
@@ -139,6 +140,7 @@ class AUCorePractitionerGenerator(BaseResourceGenerator):
                     {
                         "type": ctx.build_identifier_type(
                             code=ctx.csv_value(row, "qualification1_identifier_type_code"),
+                            system=ctx.csv_value(row, "qualification1_identifier_type_system"),
                             display=ctx.csv_value(row, "qualification1_identifier_type_display"),
                             text=ctx.csv_value(row, "qualification1_identifier_type_text"),
                         ),

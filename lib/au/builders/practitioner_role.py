@@ -42,7 +42,7 @@ class AUCorePractitionerRoleGenerator(BaseResourceGenerator):
             "resourceType": "PractitionerRole",
             "id": ctx.bulk_resource_id("practitionerrole", index),
             "meta": ctx.build_meta(AU_CORE_PRACTITIONER_ROLE_PROFILE),
-            "identifier": [{"type": ctx.build_identifier_type(code="UPIN", text="Medicare Provider Number"), "system": "http://ns.electronichealth.net.au/id/medicare-provider-number", "value": f"{ctx.random_digits(6)}{ctx.random.choice('ABCDEFGHJKLMNPQRSTUVWXYZ')}"}],
+            "identifier": [{"type": ctx.build_identifier_type(code="UPIN", system="http://terminology.hl7.org.au/CodeSystem/v2-0203", text="Medicare Provider Number"), "system": "http://ns.electronichealth.net.au/id/medicare-provider-number", "value": f"{ctx.random_digits(6)}{ctx.random.choice('ABCDEFGHJKLMNPQRSTUVWXYZ')}"}],
             "active": True,
             "period": {"start": ctx.faker.date_between(start_date="-4y", end_date="today").isoformat()},
             "practitioner": {"reference": ctx.practitioner_reference(practitioner_index)},
@@ -63,6 +63,7 @@ class AUCorePractitionerRoleGenerator(BaseResourceGenerator):
             value = ctx.csv_value(row, f"identifier{index}_value")
             identifier_type = ctx.build_identifier_type(
                 code=ctx.csv_value(row, f"identifier{index}_type_code"),
+                system=ctx.csv_value(row, f"identifier{index}_type_system"),
                 display=ctx.csv_value(row, f"identifier{index}_type_display"),
                 text=ctx.csv_value(row, f"identifier{index}_type_text"),
             )

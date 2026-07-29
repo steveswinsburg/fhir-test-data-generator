@@ -37,13 +37,6 @@ class AUCoreHealthcareServiceGenerator(BaseResourceGenerator):
             "resourceType": "HealthcareService",
             "id": ctx.bulk_resource_id("healthcareservice", index),
             "meta": ctx.build_meta(AU_CORE_HEALTHCARE_SERVICE_PROFILE),
-            "identifier": [
-                ctx.build_identifier(
-                    type_value=ctx.build_identifier_type(text="Service Identifier"),
-                    system="http://example.org/au-core/healthcareservice-id",
-                    value=f"AHS-{index:06d}",
-                )
-            ],
             "active": True,
             "providedBy": {"reference": ctx.organization_reference(organization_index)},
             "type": [{"coding": [{"system": "http://snomed.info/sct", "code": ctx.random.choice(["310000008", "394802001", "288565001"])}]}],

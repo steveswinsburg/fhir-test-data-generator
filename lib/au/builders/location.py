@@ -39,7 +39,6 @@ class AUCoreLocationGenerator(BaseResourceGenerator):
             "resourceType": "Location",
             "id": ctx.bulk_resource_id("location", index),
             "meta": ctx.build_meta(AU_CORE_LOCATION_PROFILE),
-            "identifier": [{"type": ctx.build_identifier_type(text="Location Identifier"), "system": "http://example.org/location-id", "value": f"LOC-{index:05d}"}],
             "status": "active",
             "name": f"{ctx.normalize_text(ctx.faker.city())} {ctx.random.choice(['Clinic', 'Ward', 'Hospital'])}",
             "mode": "instance",
@@ -56,7 +55,7 @@ class AUCoreLocationGenerator(BaseResourceGenerator):
         value = ctx.csv_value(row, "identifier1_value")
         if not any([system, value, ctx.csv_value(row, "identifier1_type_text")]):
             return []
-        return [{"type": ctx.build_identifier_type(code=ctx.csv_value(row, "identifier1_type_code"), display=ctx.csv_value(row, "identifier1_type_display"), text=ctx.csv_value(row, "identifier1_type_text")), "system": system, "value": value}]
+        return [{"type": ctx.build_identifier_type(code=ctx.csv_value(row, "identifier1_type_code"), system=ctx.csv_value(row, "identifier1_type_system"), display=ctx.csv_value(row, "identifier1_type_display"), text=ctx.csv_value(row, "identifier1_type_text")), "system": system, "value": value}]
 
     def build_types(self, row):
         ctx = self.context

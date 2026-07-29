@@ -11,6 +11,10 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
     def build_from_row(self, row):
         ctx = self.context
         payload_mime_types = [ctx.csv_value(row, f"payloadMimeType{index}") for index in range(1, 4)]
+        endpoint_type_system, endpoint_type_code = ctx.tokenized_system_code(
+            ctx.csv_first(row, "identifier.HCEndpointIdentifier.type")
+        )
+        endpoint_type_code = ctx.csv_first(row, "identifier.HCEndpointIdentifier.type.code") or endpoint_type_code
         endpoint = {
             "resourceType": "Endpoint",
             "id": ctx.csv_value(row, "resource.id"),
@@ -30,12 +34,16 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
             "address": ctx.csv_value(row, "address"),
             "identifier": [
                 {
-                    "system": ctx.csv_value(row, "identifier.HCSMDTargetIdentifier.system"),
+                    "system": ctx.SMD_TARGET_IDENTIFIER_SYSTEM,
                     "value": ctx.csv_value(row, "identifier.HCSMDTargetIdentifier.value"),
                 },
                 {
-                    "type": ctx.build_identifier_type(text=ctx.csv_first(row, "identifier.HCEndpointIdentifier.type.text", "identifier.HCEndpointIdentifier.type")),
-                    "system": ctx.csv_value(row, "identifier.HCEndpointIdentifier.system"),
+                    "type": ctx.build_identifier_type(
+                        code=endpoint_type_code,
+                        system=endpoint_type_system,
+                        text=ctx.csv_first(row, "identifier.HCEndpointIdentifier.type.text"),
+                    ),
+                    "system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM,
                     "value": ctx.csv_value(row, "identifier.HCEndpointIdentifier.value"),
                 },
             ],
@@ -74,10 +82,10 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
             "period": {"start": ctx.faker.date_between(start_date="-3y", end_date="today").isoformat()},
             "address": f"https://endpoint{index}.example.com.au/fhir",
             "identifier": [
-                {"system": "http://ns.electronichealth.net.au/smd/target", "value": f"SMD{index:012d}"},
+                {"system": ctx.SMD_TARGET_IDENTIFIER_SYSTEM, "value": f"SMD{index:012d}"},
                 {
-                    "type": ctx.build_identifier_type("http://terminology.hl7.org/CodeSystem/v2-0203", "RI", text="Resource Identifier"),
-                    "system": "http://digitalhealth.gov.au/fhir/hcpd/id/hc-local-identifier",
+                    "type": ctx.build_identifier_type(code="RI", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="Resource Identifier"),
+                    "system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM,
                     "value": f"EP{index:012d}",
                 },
             ],

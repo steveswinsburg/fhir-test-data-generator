@@ -34,12 +34,12 @@ class AUCoreOrganizationGenerator(BaseResourceGenerator):
             "meta": ctx.build_meta(AU_CORE_ORGANIZATION_PROFILE),
             "identifier": [
                 {
-                    "type": ctx.build_identifier_type(code="NOI", text="HPI-O"),
+                    "type": ctx.build_identifier_type(code="NOI", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="HPI-O"),
                     "system": "http://ns.electronichealth.net.au/id/hi/hpio/1.0",
                     "value": f"800362{ctx.random_digits(10)}",
                 },
                 {
-                    "type": ctx.build_identifier_type(code="XX", text="ABN"),
+                    "type": ctx.build_identifier_type(code="XX", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="ABN"),
                     "system": "http://hl7.org.au/id/abn",
                     "value": ctx.random_digits(11),
                 },
@@ -72,6 +72,7 @@ class AUCoreOrganizationGenerator(BaseResourceGenerator):
             value = ctx.csv_value(row, f"identifier{index}_value")
             identifier_type = ctx.build_identifier_type(
                 code=ctx.csv_value(row, f"identifier{index}_type_code"),
+                system=ctx.csv_value(row, f"identifier{index}_type_system"),
                 display=ctx.csv_value(row, f"identifier{index}_type_display"),
                 text=ctx.csv_value(row, f"identifier{index}_type_text"),
             )

@@ -66,7 +66,7 @@ class AUCorePatientGenerator(BaseResourceGenerator):
             "meta": ctx.build_meta(AU_CORE_PATIENT_PROFILE),
             "identifier": [
                 {
-                    "type": ctx.build_identifier_type(code="NI", text="IHI"),
+                    "type": ctx.build_identifier_type(code="NI", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="IHI"),
                     "system": "http://ns.electronichealth.net.au/id/hi/ihi/1.0",
                     "value": f"8003608{ctx.random_digits(9)}",
                 }

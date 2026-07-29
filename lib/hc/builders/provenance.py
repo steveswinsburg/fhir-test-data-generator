@@ -17,7 +17,11 @@ class HealthConnectProvenanceGenerator(BaseResourceGenerator):
             "target": [
                 {
                     "extension": [{"url": "http://hl7.org/fhir/StructureDefinition/targetPath", "valueString": ctx.csv_value(row, "target.path")}],
-                    "reference": ctx.absolute_reference(ctx.csv_value(row, "target.reference"), "Practitioner"),
+                    "reference": ctx.infer_reference(
+                        ctx.csv_value(row, "target.reference"),
+                        default_resource_type="Practitioner",
+                        candidate_types=["PractitionerRole", "Practitioner"],
+                    ),
                 }
             ],
             "recorded": ctx.csv_value(row, "recorded"),
@@ -26,13 +30,24 @@ class HealthConnectProvenanceGenerator(BaseResourceGenerator):
                 {
                     "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type", "code": ctx.csv_value(row, "agent.type.code")}]},
                     "role": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/contractsignertypecodes", "code": ctx.csv_value(row, "agent.role.code")}] }],
-                    "who": {"reference": ctx.absolute_reference(ctx.csv_value(row, "agent.who.reference"), "Organization")},
+                    "who": {
+                        "reference": ctx.infer_reference(
+                            ctx.csv_value(row, "agent.who.reference"),
+                            default_resource_type="Organization",
+                            candidate_types=["Organization", "Practitioner"],
+                        )
+                    },
                 }
             ],
             "entity": [
                 {
                     "role": ctx.csv_value(row, "entity0.role"),
-                    "what": {"reference": ctx.absolute_reference(ctx.csv_value(row, "entity0.what.reference"), "Practitioner")},
+                    "what": {
+                        "reference": ctx.infer_reference(
+                            ctx.csv_value(row, "entity0.what.reference"),
+                            candidate_types=["PractitionerRole", "Practitioner", "Organization", "Endpoint", "HealthcareService", "Location"],
+                        )
+                    },
                 }
             ],
         }

@@ -53,11 +53,11 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             "identifier": [
                 {
                     "type": ctx.build_identifier_type(
-                        ctx.csv_value(row, "identifier.type.coding.system"),
-                        ctx.csv_value(row, "identifier.type.coding.code"),
+                        code=ctx.csv_value(row, "identifier.type.coding.code"),
+                        system=ctx.csv_value(row, "identifier.type.coding.system"),
                         text=ctx.csv_first(row, "identifier.type.text", "identifier.type"),
                     ),
-                    "system": ctx.csv_value(row, "identifier.system"),
+                    "system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM,
                     "value": ctx.csv_value(row, "identifier.value"),
                 }
             ],
@@ -102,8 +102,8 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             "meta": ctx.build_meta(HEALTH_CONNECT_LOCATION_PROFILE),
             "identifier": [
                 {
-                    "type": ctx.build_identifier_type("http://terminology.hl7.org/CodeSystem/v2-0203", "XX", text="HealthConnect Local Identifier"),
-                    "system": "http://digitalhealth.gov.au/fhir/hcpd/id/hc-local-identifier",
+                    "type": ctx.build_identifier_type(code="XX", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="HealthConnect Local Identifier"),
+                    "system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM,
                     "value": ctx.random_digits(6),
                 }
             ],

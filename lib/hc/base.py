@@ -5,6 +5,10 @@ from lib.base import BaseResourceGenerator as _BaseResourceGenerator
 
 
 class HealthConnectContext(ProfileContext):
+    HCPD_LOCAL_IDENTIFIER_SYSTEM = "http://digitalhealth.gov.au/fhir/hcpd/id/hcpd-local-identifier"
+    SMD_TARGET_IDENTIFIER_SYSTEM = "http://ns.electronichealth.net.au/smd/target"
+    RESPONSIBLE_PARTY_TYPE_SYSTEM = "http://digitalhealth.gov.au/fhir/cc/CodeSystem/responsible-party-type"
+
     def candidate_input_paths(self, file_name):
         return [
             os.path.join(self.input_dir, file_name),
@@ -19,6 +23,15 @@ class HealthConnectContext(ProfileContext):
 
     def token_value(self, row, key):
         return self.normalize_token(self.csv_value(row, key))
+
+    def tokenized_system_code(self, value):
+        token = self.normalize_token(value)
+        if not token:
+            return "", ""
+        if "#" in token:
+            system, code = token.split("#", 1)
+            return system.strip(), code.strip()
+        return token, ""
 
     def bool_value(self, value):
         return self.normalize_token(value).lower() == "true"
@@ -54,6 +67,59 @@ class HealthConnectContext(ProfileContext):
 
     def endpoint_reference(self, index):
         return f"Endpoint/{self.bulk_resource_id('endpoint', index)}"
+
+    def infer_reference(self, value, default_resource_type=None, candidate_types=None):
+        reference = self.normalize_token(value)
+        if not reference:
+            return None
+        if "/" in reference or reference.startswith("#"):
+            return reference
+
+        for resource_type in candidate_types or []:
+            normalized = reference.lower()
+            resource = resource_type.lower()
+            known_prefixes = (
+                f"{resource}-",
+                f"healthconnect-{resource}-",
+                f"example-healthconnect-{resource}-",
+            )
+            if normalized.startswith(known_prefixes):
+                return f"{resource_type}/{reference}"
+
+        if default_resource_type:
+            return f"{default_resource_type}/{reference}"
+        return reference
+
+    def build_suppressed_extension(self, suppressed_by_code, include_self=None):
+        if not suppressed_by_code:
+            return None
+
+        extension = {
+            "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/suppressed",
+            "extension": [
+                {
+                    "url": "suppressedBy",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": self.RESPONSIBLE_PARTY_TYPE_SYSTEM,
+                                "code": suppressed_by_code,
+                            }
+                        ]
+                    },
+                }
+            ],
+        }
+
+        if include_self not in (None, ""):
+            extension["extension"].append(
+                {
+                    "url": "includeSelf",
+                    "valueBoolean": self.bool_value(include_self),
+                }
+            )
+
+        return extension
 
 
 class BaseResourceGenerator(_BaseResourceGenerator):

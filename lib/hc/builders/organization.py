@@ -10,6 +10,7 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
 
     def build_from_row(self, row):
         ctx = self.context
+        extensions = []
         identifiers = [
             {
                 "extension": [
@@ -36,31 +37,9 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
 		
         suppressed_by_code = ctx.csv_value(row, "suppressedBy.code")
         include_self = ctx.csv_value(row, "suppressed.includeSelf")
-        if suppressed_by_code != "":
-            suppressed_extension = {
-                "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/suppressed",
-                "extension": [
-                    {
-                        "url": "suppressedBy",
-                        "valueCodeableConcept": {
-                            "coding": [
-                                {
-                                    "system": "http://digitalhealth.gov.au/fhir/cc/CodeSystem/suppressed-cs",
-                                    "code": suppressed_by_code,
-                                },
-                            ]
-                        },
-                    }
-                ],
-            }
-            if include_self != "":
-                suppressed_extension["extension"][0]["valueCodeableConcept"]["coding"].append(
-                    {
-                        "url": "includeSelf",
-                        "valueBoolean": include_self,
-                    }
-                )
-            identifiers.append(suppressed_extension)
+        suppressed_extension = ctx.build_suppressed_extension(suppressed_by_code, include_self)
+        if suppressed_extension:
+            extensions.append(suppressed_extension)
           
         telecom = []
         for index in range(1, 7):
@@ -74,6 +53,7 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
             "resourceType": "Organization",
             "id": ctx.csv_value(row, "resource.id") or ctx.csv_value(row, "name").lower().replace(" ", "-"),
             "meta": ctx.build_meta(HEALTH_CONNECT_ORGANIZATION_PROFILE, ctx.csv_value(row, "meta.lastUpdated")),
+            "extension": extensions,
             "identifier": identifiers,
             "active": ctx.csv_value(row, "active").lower() == "true",
             "name": ctx.csv_value(row, "name"),
