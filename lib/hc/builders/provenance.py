@@ -13,7 +13,7 @@ class HealthConnectProvenanceGenerator(BaseResourceGenerator):
         provenance = {
             "resourceType": "Provenance",
             "id": ctx.csv_value(row, "resource.id"),
-            "meta": ctx.build_meta(HEALTH_CONNECT_PROVENANCE_PROFILE),
+            "meta": ctx.build_meta(HEALTH_CONNECT_PROVENANCE_PROFILE, ctx.csv_value(row, "meta.lastUpdated")),
             "target": [
                 {
                     "extension": [{"url": "http://hl7.org/fhir/StructureDefinition/targetPath", "valueString": ctx.csv_value(row, "target.path")}],
@@ -25,11 +25,34 @@ class HealthConnectProvenanceGenerator(BaseResourceGenerator):
                 }
             ],
             "recorded": ctx.csv_value(row, "recorded"),
-            "activity": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-DataOperation", "code": ctx.csv_value(row, "activity.code")}]},
+            "activity": {
+                "coding": [
+                    {
+                        "system": ctx.csv_first(row, "activity.system") or "http://terminology.hl7.org/CodeSystem/v3-DataOperation",
+                        "code": ctx.csv_value(row, "activity.code"),
+                    }
+                ]
+            },
             "agent": [
                 {
-                    "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type", "code": ctx.csv_value(row, "agent.type.code")}]},
-                    "role": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/contractsignertypecodes", "code": ctx.csv_value(row, "agent.role.code")}] }],
+                    "type": {
+                        "coding": [
+                            {
+                                "system": ctx.csv_first(row, "agent.type.system") or "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+                                "code": ctx.csv_value(row, "agent.type.code"),
+                            }
+                        ]
+                    },
+                    "role": [
+                        {
+                            "coding": [
+                                {
+                                    "system": ctx.csv_first(row, "agent.role.system") or "http://terminology.hl7.org/CodeSystem/contractsignertypecodes",
+                                    "code": ctx.csv_value(row, "agent.role.code"),
+                                }
+                            ]
+                        }
+                    ],
                     "who": {
                         "reference": ctx.infer_reference(
                             ctx.csv_value(row, "agent.who.reference"),

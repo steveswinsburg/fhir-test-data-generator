@@ -1,6 +1,7 @@
 import argparse
 import os
 import re
+import subprocess
 import sys
 
 from rich.console import Console
@@ -22,6 +23,10 @@ IG_LAYOUTS = {
 }
 
 console = Console()
+FHIR_VALIDATOR_VERSION = "4.0.1"
+FHIR_VALIDATOR_JAR = os.path.join("tools", "validator_cli.jar")
+FHIR_VALIDATOR_TX_CACHE = os.path.join(".fhir", "tx-cache")
+FHIR_VALIDATOR_PACKAGES_DIR = "packages"
 
 
 def ig_layout(ig):
@@ -115,6 +120,62 @@ def print_generation_summary(ig, mode, output_dir, summaries):
     console.print(summary_table)
 
 
+def run_fhir_cli_validation(args, summaries):
+    file_paths = []
+    for summary in summaries:
+        file_paths.extend(summary.get("output_files", []))
+
+    json_files = [path for path in file_paths if path.lower().endswith(".json")]
+    if not json_files:
+        console.print("[yellow]Validation skipped: no JSON files produced in this run.[/yellow]")
+        return 0
+
+    if not os.path.exists(FHIR_VALIDATOR_JAR):
+        raise FileNotFoundError(f"FHIR validator jar not found: {FHIR_VALIDATOR_JAR}")
+
+    ig_package = os.path.join(
+        FHIR_VALIDATOR_PACKAGES_DIR,
+        f"{ig_layout(args.ig)['package_dir']}.tgz",
+    )
+    if not os.path.exists(ig_package):
+        raise FileNotFoundError(f"FHIR validator IG package not found: {ig_package}")
+
+    os.makedirs(FHIR_VALIDATOR_TX_CACHE, exist_ok=True)
+
+    command = [
+        "java",
+        "-jar",
+        FHIR_VALIDATOR_JAR,
+        *json_files,
+        "-version",
+        FHIR_VALIDATOR_VERSION,
+        "-ig",
+        ig_package,
+        "-txCache",
+        FHIR_VALIDATOR_TX_CACHE,
+        "-output-style",
+        "compact",
+        "-level",
+        args.validator_level,
+    ]
+
+    console.print()
+    console.print(
+        Panel.fit(
+            f"Validator: [bold]{FHIR_VALIDATOR_JAR}[/bold]\n"
+            f"Input files: [bold]{len(json_files)}[/bold]\n"
+            f"FHIR version: [bold]{FHIR_VALIDATOR_VERSION}[/bold]\n"
+            f"IG package: [bold]{ig_package}[/bold]\n"
+            f"TX cache: [bold]{FHIR_VALIDATOR_TX_CACHE}[/bold]",
+            title="FHIR Validator CLI",
+            border_style="cyan",
+        )
+    )
+
+    result = subprocess.run(command)
+    return result.returncode
+
+
 def normalize_resource_type(value):
     return re.sub(r"[^a-z0-9]", "", value.lower())
 
@@ -149,6 +210,23 @@ def parse_args(argv=None):
     generate_parser.add_argument("--mode", required=True, choices=["csv", "bulk"], help="Generation mode")
     generate_parser.add_argument("--count", type=int, default=100, help="Resource count for bulk mode")
     generate_parser.add_argument("--seed", type=int, default=42, help="Seed for deterministic bulk generation")
+    generate_parser.add_argument(
+        "--validate",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Run post-generation validation through the FHIR validator CLI jar (default: enabled)",
+    )
+    generate_parser.add_argument(
+        "--validator-level",
+        choices=["hints", "warnings", "errors"],
+        default="errors",
+        help="Minimum issue level reported by validator jar",
+    )
+    generate_parser.add_argument(
+        "--fail-on-validation",
+        action="store_true",
+        help="Return a non-zero exit code when validation errors are detected",
+    )
 
     list_parser = subparsers.add_parser(
         "list",
@@ -250,6 +328,12 @@ def command_generate(args):
         summaries.append(generator.run())
 
     print_generation_summary(args.ig, args.mode, args.output_dir, summaries)
+
+    if args.validate:
+        exit_code = run_fhir_cli_validation(args, summaries)
+        if args.fail_on_validation and exit_code != 0:
+            return 2
+
     return 0
 
 def main():

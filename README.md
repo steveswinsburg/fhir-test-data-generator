@@ -3,6 +3,7 @@ A generator for producing FHIR resources from either CSV data or bulk synthetic 
 
 ## Prerequisites
 Python 3
+Java (required for FHIR validator execution)
 
 ## Installation
 
@@ -55,6 +56,20 @@ Examples:
 `python3 generate.py list --ig hcpd-26.0.0`
 
 `python3 generate.py doctor`
+
+### Validator setup (required for `--validate`)
+
+Validation uses the HL7 FHIR validator CLI JAR at `tools/validator_cli.jar`.
+This file is intentionally not committed to git.
+
+1. Download the validator CLI JAR from the official HL7 FHIR validator release page:
+	https://github.com/hapifhir/org.hl7.fhir.core/releases
+2. Place the downloaded file at:
+	`tools/validator_cli.jar`
+
+After that, validation-enabled generation works, for example:
+
+`python3 generate.py generate --ig hcpd-26.0.0 --mode csv --validate`
 
 ### CLI switches
 

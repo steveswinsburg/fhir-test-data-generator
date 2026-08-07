@@ -12,6 +12,62 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
         ctx = self.context
         start_value, start_extension = ctx.make_time_extension(ctx.csv_value(row, "availableStartTime"), ctx.csv_value(row, "timeZone"))
         end_value, end_extension = ctx.make_time_extension(ctx.csv_value(row, "availableEndTime"), ctx.csv_value(row, "timeZone"))
+        second_start_value, second_start_extension = ctx.make_time_extension(
+            ctx.csv_value(row, "availableTime2.availableStartTime"),
+            ctx.csv_value(row, "availableTime2.timeZone"),
+        )
+        second_end_value, second_end_extension = ctx.make_time_extension(
+            ctx.csv_value(row, "availableTime2.availableEndTime"),
+            ctx.csv_value(row, "availableTime2.timeZone"),
+        )
+        source_system = ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM
+        source_value = ctx.csv_first(row, "identifier.HCSourceIdentifier.value")
+        service_type = [
+            {
+                "coding": [
+                    {
+                        "system": ctx.csv_value(row, "type.system"),
+                        "code": ctx.csv_value(row, "type.code"),
+                        "display": ctx.csv_value(row, "type.display"),
+                    }
+                ]
+            }
+        ]
+
+        available_time = [
+            {
+                "daysOfWeek": [ctx.csv_value(row, f"daysOfWeek{index}") for index in range(1, 6)],
+                "allDay": ctx.bool_value(ctx.csv_value(row, "allDay")),
+                "availableStartTime": start_value,
+                "_availableStartTime": start_extension,
+                "availableEndTime": end_value,
+                "_availableEndTime": end_extension,
+            }
+        ]
+        if ctx.csv_value(row, "availableTime2.daysOfWeek1"):
+            available_time.append(
+                {
+                    "daysOfWeek": [ctx.csv_value(row, f"availableTime2.daysOfWeek{index}") for index in range(1, 6)],
+                    "allDay": ctx.bool_value(ctx.csv_value(row, "availableTime2.allDay")),
+                    "availableStartTime": second_start_value,
+                    "_availableStartTime": second_start_extension,
+                    "availableEndTime": second_end_value,
+                    "_availableEndTime": second_end_extension,
+                }
+            )
+
+        location_refs = [ctx.csv_value(row, "location.reference")]
+        if ctx.csv_value(row, "location.reference2"):
+            location_refs.append(ctx.csv_value(row, "location.reference2"))
+
+        coverage_refs = [ctx.csv_value(row, "coverageArea.reference")]
+        if ctx.csv_value(row, "coverageArea.reference2"):
+            coverage_refs.append(ctx.csv_value(row, "coverageArea.reference2"))
+
+        endpoint_refs = [ctx.csv_value(row, "endpoint.reference")]
+        if ctx.csv_value(row, "endpoint.reference2"):
+            endpoint_refs.append(ctx.csv_value(row, "endpoint.reference2"))
+
         healthcare_service = {
             "resourceType": "HealthcareService",
             "id": ctx.csv_value(row, "resource.id"),
@@ -41,24 +97,26 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
                     },
                 },
             ],
-            "identifier": [{"system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM, "value": ctx.csv_value(row, "identifier.value")}],
-            "providedBy": {"reference": ctx.csv_value(row, "providedBy.reference")},
-            "type": [{"coding": [{"system": ctx.csv_value(row, "type.system"), "code": ctx.csv_value(row, "type.code"), "display": ctx.csv_value(row, "type.display")}]}],
-            "location": [{"reference": ctx.csv_value(row, "location.reference")}],
-            "name": ctx.csv_value(row, "name"),
-            "appointmentRequired": ctx.bool_value(ctx.csv_value(row, "appointmentRequired")),
-            "coverageArea": [{"reference": ctx.csv_value(row, "coverageArea.reference")}],
-            "endpoint": [{"reference": ctx.csv_value(row, "endpoint.reference")}],
-            "availableTime": [
+            "identifier": [
+                ctx.build_source_identifier(
+                    source_system=source_system,
+                    source_value=source_value,
+                ),
                 {
-                    "daysOfWeek": [ctx.csv_value(row, f"daysOfWeek{index}") for index in range(1, 6)],
-                    "allDay": ctx.bool_value(ctx.csv_value(row, "allDay")),
-                    "availableStartTime": start_value,
-                    "_availableStartTime": start_extension,
-                    "availableEndTime": end_value,
-                    "_availableEndTime": end_extension,
+                    "type": ctx.build_identifier_type(code="XX", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="Organization identifier"),
+                    "system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM,
+                    "value": ctx.csv_value(row, "identifier.value"),
                 }
             ],
+            "active": ctx.bool_value(ctx.csv_first(row, "active") or "true"),
+            "providedBy": {"reference": ctx.csv_value(row, "providedBy.reference")},
+            "type": service_type,
+            "location": [{"reference": ref} for ref in location_refs],
+            "name": ctx.csv_value(row, "name"),
+            "appointmentRequired": ctx.bool_value(ctx.csv_value(row, "appointmentRequired")),
+            "coverageArea": [{"reference": ref} for ref in coverage_refs],
+            "endpoint": [{"reference": ref} for ref in endpoint_refs],
+            "availableTime": available_time,
         }
         return ctx.clean(healthcare_service)
 
@@ -73,9 +131,9 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
         endpoint_index = ctx.random.randint(1, endpoint_pool)
         service_type = ctx.random.choice(
             [
-                ("1584801000168109", "Geriatric evaluation and management service"),
-                ("288565001", "Physiotherapy service"),
-                ("394814009", "General medical service"),
+                ("310002000", "Assessment service"),
+                ("310001007", "Anaesthetic service"),
+                ("310016005", "Adult hearing aid service"),
             ]
         )
         start_value, start_extension = ctx.make_time_extension("08:00:00", "Australia/Sydney")
@@ -88,10 +146,29 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
                 {"url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/active-period", "valuePeriod": {"start": ctx.faker.date_between(start_date="-3y", end_date="today").isoformat()}},
                 {
                     "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/iar-levels-of-care",
-                    "valueCodeableConcept": {"coding": [{"system": "http://ns.electronichealth.net.au/hc/CodeSystem/iar-levels-of-care", "code": "3", "display": "Level 3 (moderate intensity interventions)"}]},
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "https://healthterminologies.gov.au/fhir/CodeSystem/iar-levels-of-care-1",
+                                "code": "level3",
+                                "display": "Level 3 - Moderate intensity services",
+                            }
+                        ]
+                    },
                 },
             ],
-            "identifier": [{"system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM, "value": f"HS{index:012d}"}],
+            "identifier": [
+                ctx.build_source_identifier(
+                    source_system=ctx.SOURCE_PCA_SYSTEM,
+                    source_value=f"HS-PCA-{index:06d}",
+                ),
+                {
+                    "type": ctx.build_identifier_type(code="XX", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="Organization identifier"),
+                    "system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM,
+                    "value": f"HS{index:012d}",
+                }
+            ],
+            "active": True,
             "providedBy": {"reference": ctx.organization_reference(organization_index)},
             "type": [{"coding": [{"system": "http://snomed.info/sct", "code": service_type[0], "display": service_type[1]}]}],
             "location": [{"reference": ctx.location_reference(location_index)}],

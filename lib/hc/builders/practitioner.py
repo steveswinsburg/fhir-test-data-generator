@@ -18,6 +18,9 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
 
         identifiers = []
         hpii_value = ctx.csv_value(row, "identifier.hpii.value")
+        hpii_status_code = ctx.csv_first(row, "identifier.hpii.status.code") or "A"
+        hpii_status_display = ctx.csv_first(row, "identifier.hpii.status.display") or "Active"
+        hpii_status_system = ctx.csv_first(row, "identifier.hpii.status.system") or ctx.HI_SERVICES_IDENTIFIER_STATUS_SYSTEM
         if hpii_value:
             identifiers.append(
                 {
@@ -31,6 +34,13 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                     },
                     "system": "http://ns.electronichealth.net.au/id/hi/hpii/1.0",
                     "value": hpii_value,
+                    "extension": [
+                        ctx.build_hpii_status_extension(
+                            status_code=hpii_status_code,
+                            status_display=hpii_status_display,
+                            status_system=hpii_status_system,
+                        )
+                    ],
                 }
             )
 
@@ -77,10 +87,18 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
             ],
             "telecom": telecom,
             "gender": ctx.csv_value(row, "gender"),
+            "birthDate": ctx.csv_value(row, "birthDate"),
             "address": [
                 {
                     "text": ctx.csv_value(row, "address.text"),
-                    "line": [ctx.csv_value(row, "address.line1")] if ctx.csv_value(row, "address.line1") else [],
+                    "line": [
+                        value
+                        for value in [
+                            ctx.csv_value(row, "address.line1"),
+                            ctx.csv_value(row, "address.line2"),
+                        ]
+                        if value
+                    ],
                     "city": ctx.csv_value(row, "address.city"),
                     "state": ctx.csv_value(row, "address.state"),
                     "postalCode": ctx.csv_value(row, "address.postalCode"),
@@ -160,6 +178,12 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                     "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "NPI"}]},
                     "system": "http://ns.electronichealth.net.au/id/hi/hpii/1.0",
                     "value": f"80036{ctx.random_digits(11)}",
+                    "extension": [
+                        ctx.build_hpii_status_extension(
+                            status_code="A",
+                            status_display="Active",
+                        )
+                    ],
                 }
             ],
             "name": [
@@ -191,8 +215,9 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
         return ctx.clean(practitioner)
 
     def build_default_qualification(self, row, practitioner_id):
-        registration_number = self.default_registration_number(practitioner_id)
-        profession = row.get("qualification.code.text") or self.context.random.choice(
+        ctx = self.context
+        registration_number = row.get("qualification.identifier.value") or self.default_registration_number(practitioner_id)
+        profession = row.get("qualification.code.text") or ctx.random.choice(
             [
                 "General Practitioner",
                 "Physiotherapist",
@@ -201,6 +226,7 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                 "Psychologist",
             ]
         )
+        issuer_display = row.get("qualification.issuer.display") or "Ahpra"
         return {
             "identifier": [
                 {
@@ -217,7 +243,7 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                 }
             ],
             "code": {"text": profession},
-            "issuer": {"display": "Ahpra"},
+            "issuer": {"display": issuer_display},
         }
 
     def default_registration_number(self, practitioner_id):

@@ -11,6 +11,10 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
     def build_from_row(self, row):
         ctx = self.context
         identifiers = [
+            ctx.build_source_identifier(
+                source_system=ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM,
+                source_value=ctx.csv_first(row, "identifier.HCSourceIdentifier.value"),
+            ),
             {
                 "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "XX", "display": "Organization identifier"}]},
                 "system": "http://digitalhealth.gov.au/fhir/hcpd/id/hcpd-local-identifier",
@@ -29,15 +33,16 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
         ]
 
         telecom = []
-        telecom_value = ctx.csv_value(row, "telecom.value")
-        if telecom_value:
-            telecom.append(
-                {
-                    "system": ctx.token_value(row, "telecom.system"),
-                    "value": telecom_value,
-                    "use": ctx.token_value(row, "telecom.use"),
-                }
-            )
+        for prefix in ("telecom", "telecom2"):
+            telecom_value = ctx.csv_value(row, f"{prefix}.value")
+            if telecom_value:
+                telecom.append(
+                    {
+                        "system": ctx.token_value(row, f"{prefix}.system"),
+                        "value": telecom_value,
+                        "use": ctx.token_value(row, f"{prefix}.use"),
+                    }
+                )
 
         extensions = []
         if ctx.csv_value(row, "communication.code") and ctx.csv_value(row, "communication.display"):
@@ -100,18 +105,26 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
                 )
             )
 
+        healthcare_services = [{"reference": ctx.csv_value(row, "healthcareService")}]
+        if ctx.csv_value(row, "healthcareService2"):
+            healthcare_services.append({"reference": ctx.csv_value(row, "healthcareService2")})
+
         practitioner_role = {
             "resourceType": "PractitionerRole",
             "id": ctx.csv_value(row, "resource.id"),
             "meta": ctx.build_meta(HEALTH_CONNECT_PRACTITIONER_ROLE_PROFILE, ctx.csv_value(row, "meta.lastUpdated")),
             "extension": extensions,
             "identifier": identifiers,
-            "period": {"start": ctx.csv_value(row, "period.start")},
+            "active": ctx.bool_value(ctx.csv_first(row, "active") or "true"),
+            "period": {
+                "start": ctx.csv_value(row, "period.start"),
+                "end": ctx.csv_value(row, "period.end"),
+            },
             "practitioner": {"reference": ctx.csv_value(row, "practitioner.reference")},
             "organization": {"reference": ctx.csv_value(row, "organization.reference")},
             "code": [{"coding": [{"system": "http://snomed.info/sct", "code": ctx.csv_value(row, "code.code"), "display": ctx.csv_value(row, "code.display")}]}],
             "location": [{"reference": ctx.csv_value(row, "location.reference")}],
-            "healthcareService": [{"reference": ctx.csv_value(row, "healthcareService")}],
+            "healthcareService": healthcare_services,
             "telecom": telecom,
             "availableTime": available_time,
         }
@@ -173,6 +186,10 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
                 },
             ],
             "identifier": [
+                ctx.build_source_identifier(
+                    source_system=ctx.SOURCE_PCA_SYSTEM,
+                    source_value=f"PR-PCA-{index:06d}",
+                ),
                 {
                     "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "XX"}]},
                     "system": "http://digitalhealth.gov.au/fhir/hcpd/id/hcpd-local-identifier",
@@ -189,6 +206,7 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
                     "value": reg_number,
                 },
             ],
+            "active": True,
             "period": {"start": ctx.faker.date_between(start_date="-4y", end_date="today").isoformat()},
             "practitioner": {"reference": ctx.practitioner_reference(practitioner_index)},
             "organization": {"reference": ctx.organization_reference(organization_index)},

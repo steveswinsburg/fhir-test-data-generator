@@ -3,3 +3,6 @@ output
 venv
 IGs
 **/__pycache__
+.fhir
+tools/validator_cli.jar
+tools/.DS_Store

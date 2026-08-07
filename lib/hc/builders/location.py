@@ -10,6 +10,8 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
 
     def build_from_row(self, row):
         ctx = self.context
+        source_system = ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM
+        source_value = ctx.csv_first(row, "identifier.HCSourceIdentifier.value")
         address = {
             "extension": [
                 {
@@ -50,7 +52,12 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             "resourceType": "Location",
             "id": ctx.csv_value(row, "resource.id"),
             "meta": ctx.build_meta(HEALTH_CONNECT_LOCATION_PROFILE, ctx.csv_value(row, "meta.lastUpdated")),
+            "status": "active",
             "identifier": [
+                ctx.build_source_identifier(
+                    source_system=source_system,
+                    source_value=source_value,
+                ),
                 {
                     "type": ctx.build_identifier_type(
                         code=ctx.csv_value(row, "identifier.type.coding.code"),
@@ -100,7 +107,12 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             "resourceType": "Location",
             "id": ctx.bulk_resource_id("location", index),
             "meta": ctx.build_meta(HEALTH_CONNECT_LOCATION_PROFILE),
+            "status": "active",
             "identifier": [
+                ctx.build_source_identifier(
+                    source_system=ctx.SOURCE_PCA_SYSTEM,
+                    source_value=f"LOC-PCA-{index:06d}",
+                ),
                 {
                     "type": ctx.build_identifier_type(code="XX", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="HealthConnect Local Identifier"),
                     "system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM,

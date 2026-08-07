@@ -38,6 +38,7 @@ class ProfileContext:
             json.dump(payload, handle, indent=2)
             handle.write("\n")
         print(f"Saved: {file_name}")
+        return output_path
 
     def write_ndjson(self, resource_type, resources):
         os.makedirs(self.output_dir, exist_ok=True)
@@ -48,6 +49,7 @@ class ProfileContext:
                 handle.write(json.dumps(resource, separators=(",", ":")))
                 handle.write("\n")
         print(f"Saved: {file_name}")
+        return output_path
 
     def clean(self, value):
         if isinstance(value, dict):
@@ -135,11 +137,13 @@ class BaseResourceGenerator:
     def run(self):
         if self.args.mode == "csv":
             generated_count = 0
+            output_files = []
             for row in self.context.csv_rows(self.csv_file):
                 if not self.context.row_has_data(row):
                     continue
                 resource = self.build_from_row(row)
-                self.context.write_json(self.resource_type, resource["id"], resource)
+                output_path = self.context.write_json(self.resource_type, resource["id"], resource)
+                output_files.append(output_path)
                 generated_count += 1
             return {
                 "resource_type": self.resource_type,
@@ -147,16 +151,18 @@ class BaseResourceGenerator:
                 "generated_count": generated_count,
                 "output_dir": self.context.output_dir,
                 "output_format": "json",
+                "output_files": output_files,
             }
 
         resources = [self.build_bulk(index) for index in range(1, self.args.count + 1)]
-        self.context.write_ndjson(self.resource_type, resources)
+        output_path = self.context.write_ndjson(self.resource_type, resources)
         return {
             "resource_type": self.resource_type,
             "mode": self.args.mode,
             "generated_count": len(resources),
             "output_dir": self.context.output_dir,
             "output_format": "ndjson",
+            "output_files": [output_path],
         }
 
     def build_from_row(self, row):

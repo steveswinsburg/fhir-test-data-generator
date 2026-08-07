@@ -8,6 +8,21 @@ class HealthConnectContext(ProfileContext):
     HCPD_LOCAL_IDENTIFIER_SYSTEM = "http://digitalhealth.gov.au/fhir/hcpd/id/hcpd-local-identifier"
     SMD_TARGET_IDENTIFIER_SYSTEM = "http://ns.electronichealth.net.au/smd/target"
     RESPONSIBLE_PARTY_TYPE_SYSTEM = "http://digitalhealth.gov.au/fhir/cc/CodeSystem/responsible-party-type"
+    ENDPOINT_PAYLOAD_TYPE_SYSTEM = "http://hl7.org.au/fhir/pd/CodeSystem/endpoint-payload-type"
+    V2_0203_SYSTEM = "http://terminology.hl7.org.au/CodeSystem/v2-0203"
+    V2_0203_R4_SYSTEM = "http://terminology.hl7.org/CodeSystem/v2-0203"
+    SOURCE_NHSD_SYSTEM = "http://ns.electronichealth.net.au/id/source/nhsd"
+    SOURCE_PCA_SYSTEM = "http://ns.electronichealth.net.au/id/source/pca"
+    HI_SERVICES_IDENTIFIER_STATUS_SYSTEM = "http://digitalhealth.gov.au/fhir/hcpd/CodeSystem/hi-services-identifier-status-cs"
+
+    IDENTIFIER_TYPE_BY_SYSTEM = {
+        "http://ns.electronichealth.net.au/id/hi/hpio/1.0": ("NOI", "HPI-O"),
+        "http://hl7.org.au/id/abn": ("XX", "ABN"),
+        "http://hl7.org.au/id/acn": ("XX", "ACN"),
+        "http://ns.electronichealth.net.au/id/hi/hpii/1.0": ("NPI", "HPI-I"),
+        "http://hl7.org.au/id/ahpra-registration-number": ("AHPRA", "Ahpra Registration Number"),
+        "http://ns.electronichealth.net.au/id/medicare-provider-number": ("UPIN", "Medicare Provider Number"),
+    }
 
     def candidate_input_paths(self, file_name):
         return [
@@ -61,6 +76,29 @@ class HealthConnectContext(ProfileContext):
                 ]
             }
         return time_value, primitive_extension
+
+    def build_source_identifier(self, source_system, source_value):
+        return {
+            "type": self.build_identifier_type(
+                code="RI",
+                system=self.V2_0203_R4_SYSTEM,
+                text="Resource identifier",
+            ),
+            "system": source_system,
+            "value": source_value,
+        }
+
+    def build_hpii_status_extension(self, status_code, status_display=None, status_system=None):
+        if not status_code:
+            return None
+        return {
+            "url": "http://digitalhealth.gov.au/fhir/hcpd/StructureDefinition/hi-services-identifier-status",
+            "valueCoding": {
+                "system": status_system or self.HI_SERVICES_IDENTIFIER_STATUS_SYSTEM,
+                "code": status_code,
+                "display": status_display,
+            },
+        }
 
     def healthcare_service_reference(self, index):
         return f"HealthcareService/{self.bulk_resource_id('healthcareservice', index)}"
@@ -120,6 +158,40 @@ class HealthConnectContext(ProfileContext):
             )
 
         return extension
+
+    def default_identifier_type_parts(self, identifier_system, fallback_code=None, fallback_text=None):
+        default_code, default_text = self.IDENTIFIER_TYPE_BY_SYSTEM.get(
+            identifier_system,
+            (fallback_code, fallback_text),
+        )
+        return default_code, default_text
+
+    def build_identifier_type_for_system(self, identifier_system, code=None, type_system=None, text=None):
+        default_code, default_text = self.default_identifier_type_parts(identifier_system)
+        resolved_code = code or default_code
+        resolved_text = text or default_text
+        resolved_system = type_system or self.V2_0203_SYSTEM
+        return self.build_identifier_type(code=resolved_code, system=resolved_system, text=resolved_text)
+
+    def build_identifier_type_from_row(self, row, field_prefix, identifier_system=None, fallback_code=None, fallback_text=None):
+        type_system, type_code = self.tokenized_system_code(self.csv_first(row, f"{field_prefix}.type"))
+        type_system = self.csv_first(row, f"{field_prefix}.type.coding.system") or type_system
+        type_code = self.csv_first(row, f"{field_prefix}.type.coding.code") or type_code
+        type_text = self.csv_first(row, f"{field_prefix}.type.text")
+
+        if not type_code:
+            type_code, default_text = self.default_identifier_type_parts(
+                identifier_system,
+                fallback_code=fallback_code,
+                fallback_text=fallback_text,
+            )
+            if not type_text:
+                type_text = default_text
+
+        if not type_system:
+            type_system = self.V2_0203_SYSTEM
+
+        return self.build_identifier_type(code=type_code, system=type_system, text=type_text)
 
 
 class BaseResourceGenerator(_BaseResourceGenerator):

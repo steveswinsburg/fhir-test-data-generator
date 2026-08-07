@@ -10,6 +10,9 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
 
     def build_from_row(self, row):
         ctx = self.context
+        hpio_system = "http://ns.electronichealth.net.au/id/hi/hpio/1.0"
+        abn_system = "http://hl7.org.au/id/abn"
+        acn_system = "http://hl7.org.au/id/acn"
         extensions = []
         identifiers = [
             {
@@ -27,12 +30,24 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                         },
                     }
                 ],
-                "type": {"coding": [{"system": "http://terminology.hl7.org.au/CodeSystem/v2-0203", "code": "NOI"}]},
-                "system": "http://ns.electronichealth.net.au/id/hi/hpio/1.0",
+                "type": ctx.build_identifier_type_from_row(
+                    row,
+                    "identifier.hpio",
+                    identifier_system=hpio_system,
+                ),
+                "system": hpio_system,
                 "value": ctx.csv_value(row, "identifier.hpio.value"),
             },
-            {"type": {"text": "ABN"}, "system": "http://hl7.org.au/id/abn", "value": ctx.csv_value(row, "identifier.abn.value")},
-            {"type": {"text": "ACN"}, "system": "http://hl7.org.au/id/acn", "value": ctx.csv_value(row, "identifier.acn.value")},
+            {
+                "type": ctx.build_identifier_type(text="ABN"),
+                "system": abn_system,
+                "value": ctx.csv_value(row, "identifier.abn.value"),
+            },
+            {
+                "type": ctx.build_identifier_type(text="ACN"),
+                "system": acn_system,
+                "value": ctx.csv_value(row, "identifier.acn.value"),
+            },
         ]
 		
         suppressed_by_code = ctx.csv_value(row, "suppressedBy.code")
@@ -75,6 +90,9 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
     def build_bulk(self, index):
         ctx = self.context
         org_id = ctx.bulk_resource_id("organization", index)
+        hpio_system = "http://ns.electronichealth.net.au/id/hi/hpio/1.0"
+        abn_system = "http://hl7.org.au/id/abn"
+        acn_system = "http://hl7.org.au/id/acn"
         company_root = ctx.normalize_text(ctx.faker.company())
         company_name = f"{company_root} {ctx.random.choice(['Clinic', 'Hospital', 'Health', 'Medical Centre'])}".strip()
         website = f"https://{ctx.slugify(company_name)}.example.com.au"
@@ -99,12 +117,20 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                             },
                         }
                     ],
-                    "type": {"coding": [{"system": "http://terminology.hl7.org.au/CodeSystem/v2-0203", "code": "NOI"}]},
-                    "system": "http://ns.electronichealth.net.au/id/hi/hpio/1.0",
+                        "type": ctx.build_identifier_type_for_system(hpio_system),
+                        "system": hpio_system,
                     "value": f"80036{ctx.random_digits(11)}",
                 },
-                {"type": {"text": "ABN"}, "system": "http://hl7.org.au/id/abn", "value": ctx.random_digits(11)},
-                {"type": {"text": "ACN"}, "system": "http://hl7.org.au/id/acn", "value": ctx.random_digits(9)},
+                    {
+                        "type": ctx.build_identifier_type(text="ABN"),
+                        "system": abn_system,
+                        "value": ctx.random_digits(11),
+                    },
+                    {
+                        "type": ctx.build_identifier_type(text="ACN"),
+                        "system": acn_system,
+                        "value": ctx.random_digits(9),
+                    },
             ],
             "active": True,
             "name": company_name,
