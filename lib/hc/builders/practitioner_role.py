@@ -106,8 +106,6 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
             )
 
         healthcare_services = [{"reference": ctx.csv_value(row, "healthcareService")}]
-        if ctx.csv_value(row, "healthcareService2"):
-            healthcare_services.append({"reference": ctx.csv_value(row, "healthcareService2")})
 
         practitioner_role = {
             "resourceType": "PractitionerRole",

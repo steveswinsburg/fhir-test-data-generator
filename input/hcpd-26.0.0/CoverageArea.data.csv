@@ -1,0 +1,6 @@
+resource.id,meta.lastUpdated,status,name,address.line1,address.line2,address.city,address.state,address.postalCode,address.country,managingOrganization.reference
+example-healthconnect-coverage-area-1,2025-09-01T10:00:00Z,active,Sydney CBD Catchment,151 Castlereagh Street,,Sydney,NSW,2000,AU,Organization/example-healthconnect-organization-1
+example-healthconnect-coverage-area-2,2025-09-02T10:00:00Z,active,Metro Inner West Catchment,250 George Street,Suite 2,Sydney,NSW,2000,AU,Organization/example-healthconnect-organization-2
+example-healthconnect-coverage-area-3,2025-09-03T10:00:00Z,active,South Coast Catchment,18 Marine Parade,,Wollongong,NSW,2500,AU,Organization/example-healthconnect-organization-3
+example-healthconnect-coverage-area-4,2025-09-04T10:00:00Z,active,Riverlands Regional Catchment,72 Murray Ave,,Albury,NSW,2640,AU,Organization/example-healthconnect-organization-4
+example-healthconnect-coverage-area-5,2025-09-05T10:00:00Z,active,Western Plains Catchment,300 High Street,Suite 8,Dubbo,NSW,2830,AU,Organization/example-healthconnect-organization-5

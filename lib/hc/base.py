@@ -17,8 +17,8 @@ class HealthConnectContext(ProfileContext):
 
     IDENTIFIER_TYPE_BY_SYSTEM = {
         "http://ns.electronichealth.net.au/id/hi/hpio/1.0": ("NOI", "HPI-O"),
-        "http://hl7.org.au/id/abn": ("XX", "ABN"),
-        "http://hl7.org.au/id/acn": ("XX", "ACN"),
+        "http://hl7.org.au/id/abn": ("ABN", "ABN"),
+        "http://hl7.org.au/id/acn": ("ACN", "ACN"),
         "http://ns.electronichealth.net.au/id/hi/hpii/1.0": ("NPI", "HPI-I"),
         "http://hl7.org.au/id/ahpra-registration-number": ("AHPRA", "Ahpra Registration Number"),
         "http://ns.electronichealth.net.au/id/medicare-provider-number": ("UPIN", "Medicare Provider Number"),

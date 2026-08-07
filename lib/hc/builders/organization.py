@@ -14,6 +14,24 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
         abn_system = "http://hl7.org.au/id/abn"
         acn_system = "http://hl7.org.au/id/acn"
         extensions = []
+        hpio_type_display = ctx.csv_value(row, "hpio.coding.display") or "Network"
+
+        abn_type = {"text": "ABN"}
+        if ctx.csv_first(row, "identifier.abn.type", "identifier.abn.type.coding.code", "identifier.abn.type.text"):
+            abn_type = ctx.build_identifier_type_from_row(
+                row,
+                "identifier.abn",
+                identifier_system=abn_system,
+            )
+
+        acn_type = {"text": "ACN"}
+        if ctx.csv_first(row, "identifier.acn.type", "identifier.acn.type.coding.code", "identifier.acn.type.text"):
+            acn_type = ctx.build_identifier_type_from_row(
+                row,
+                "identifier.acn",
+                identifier_system=acn_system,
+            )
+
         identifiers = [
             {
                 "extension": [
@@ -24,7 +42,7 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                                 {
                                     "system": "http://digitalhealth.gov.au/fhir/hcpd/CodeSystem/hi-org-classification-cs",
                                         "code": ctx.token_value(row, "hpio.coding.code"),
-                                    "display": ctx.csv_value(row, "identifier.hpio.extension.HCOrgClassification.display"),
+                                    "display": hpio_type_display,
                                 }
                             ]
                         },
@@ -34,22 +52,24 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                     row,
                     "identifier.hpio",
                     identifier_system=hpio_system,
+                    fallback_code="NOI",
+                    fallback_text="HPI-O",
                 ),
                 "system": hpio_system,
                 "value": ctx.csv_value(row, "identifier.hpio.value"),
             },
             {
-                "type": ctx.build_identifier_type(text="ABN"),
+                "type": abn_type,
                 "system": abn_system,
                 "value": ctx.csv_value(row, "identifier.abn.value"),
             },
             {
-                "type": ctx.build_identifier_type(text="ACN"),
+                "type": acn_type,
                 "system": acn_system,
                 "value": ctx.csv_value(row, "identifier.acn.value"),
             },
         ]
-		
+
         suppressed_by_code = ctx.csv_value(row, "suppressedBy.code")
         include_self = ctx.csv_value(row, "suppressed.includeSelf")
         suppressed_extension = ctx.build_suppressed_extension(suppressed_by_code, include_self)
@@ -70,7 +90,7 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
             "meta": ctx.build_meta(HEALTH_CONNECT_ORGANIZATION_PROFILE, ctx.csv_value(row, "meta.lastUpdated")),
             "extension": extensions,
             "identifier": identifiers,
-            "active": ctx.csv_value(row, "active").lower() == "true",
+            "active": ctx.bool_value(ctx.csv_first(row, "active") or "true"),
             "name": ctx.csv_value(row, "name"),
             "alias": [ctx.csv_value(row, "alias")] if ctx.csv_value(row, "alias") else [],
             "telecom": telecom,
@@ -122,12 +142,12 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                     "value": f"80036{ctx.random_digits(11)}",
                 },
                     {
-                        "type": ctx.build_identifier_type(text="ABN"),
+                        "type": ctx.build_identifier_type_for_system(abn_system),
                         "system": abn_system,
                         "value": ctx.random_digits(11),
                     },
                     {
-                        "type": ctx.build_identifier_type(text="ACN"),
+                        "type": ctx.build_identifier_type_for_system(acn_system),
                         "system": acn_system,
                         "value": ctx.random_digits(9),
                     },

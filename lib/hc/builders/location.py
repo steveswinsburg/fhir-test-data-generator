@@ -12,10 +12,11 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
         ctx = self.context
         source_system = ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM
         source_value = ctx.csv_first(row, "identifier.HCSourceIdentifier.value")
+
         address = {
             "extension": [
                 {
-                    "url": ctx.csv_value(row, "address.extension.url"),
+                    "url": ctx.csv_value(row, "address.extension.url") or "http://hl7.org.au/fhir/StructureDefinition/address-identifier",
                     "valueIdentifier": {
                         "type": ctx.build_identifier_type(
                             text=ctx.csv_first(row, "address.valueIdentifier.type.text", "address.valueIdentifier.type")
@@ -35,7 +36,7 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
         }
 
         preferred_postal = {
-            "url": ctx.csv_value(row, "extension.url1"),
+            "url": ctx.csv_value(row, "extension.url1") or "http://digitalhealth.gov.au/fhir/hcpd/StructureDefinition/hcpd-alternate-postal-address",
             "valueAddress": {
                 "use": ctx.token_value(row, "extension.valueAddress.use"),
                 "type": ctx.token_value(row, "extension.valueAddress.type"),
@@ -52,7 +53,6 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             "resourceType": "Location",
             "id": ctx.csv_value(row, "resource.id"),
             "meta": ctx.build_meta(HEALTH_CONNECT_LOCATION_PROFILE, ctx.csv_value(row, "meta.lastUpdated")),
-            "status": "active",
             "identifier": [
                 ctx.build_source_identifier(
                     source_system=source_system,
@@ -68,6 +68,7 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
                     "value": ctx.csv_value(row, "identifier.value"),
                 }
             ],
+            "status": ctx.csv_first(row, "status") or "active",
             "name": ctx.csv_value(row, "name"),
             "alias": [ctx.csv_value(row, "alias")] if ctx.csv_value(row, "alias") else [],
             "type": [
@@ -107,7 +108,6 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             "resourceType": "Location",
             "id": ctx.bulk_resource_id("location", index),
             "meta": ctx.build_meta(HEALTH_CONNECT_LOCATION_PROFILE),
-            "status": "active",
             "identifier": [
                 ctx.build_source_identifier(
                     source_system=ctx.SOURCE_PCA_SYSTEM,
@@ -119,6 +119,7 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
                     "value": ctx.random_digits(6),
                 }
             ],
+            "status": "active",
             "name": f"{ctx.normalize_text(ctx.faker.company())} {location_type[1]}",
             "alias": [ctx.normalize_text(ctx.faker.city())],
             "type": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode", "code": location_type[0], "display": location_type[1]}]}],

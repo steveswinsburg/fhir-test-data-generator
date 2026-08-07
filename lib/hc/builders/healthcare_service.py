@@ -2,6 +2,7 @@ from ..base import BaseResourceGenerator
 
 
 HEALTH_CONNECT_HEALTHCARE_SERVICE_PROFILE = "http://digitalhealth.gov.au/fhir/hcpd/StructureDefinition/hcpd-healthcareservice"
+HEALTH_CONNECT_SERVICE_COVERAGE_AREA_PROFILE = "http://digitalhealth.gov.au/fhir/hcpd/StructureDefinition/hcpd-service-coverage-area"
 
 
 class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
@@ -12,66 +13,56 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
         ctx = self.context
         start_value, start_extension = ctx.make_time_extension(ctx.csv_value(row, "availableStartTime"), ctx.csv_value(row, "timeZone"))
         end_value, end_extension = ctx.make_time_extension(ctx.csv_value(row, "availableEndTime"), ctx.csv_value(row, "timeZone"))
-        second_start_value, second_start_extension = ctx.make_time_extension(
-            ctx.csv_value(row, "availableTime2.availableStartTime"),
-            ctx.csv_value(row, "availableTime2.timeZone"),
-        )
-        second_end_value, second_end_extension = ctx.make_time_extension(
-            ctx.csv_value(row, "availableTime2.availableEndTime"),
-            ctx.csv_value(row, "availableTime2.timeZone"),
-        )
         source_system = ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM
         source_value = ctx.csv_first(row, "identifier.HCSourceIdentifier.value")
-        service_type = [
-            {
-                "coding": [
+        type_system = ctx.csv_value(row, "type.system")
+        type_code = ctx.csv_value(row, "type.code")
+        type_display = ctx.csv_value(row, "type.display")
+
+        service_type = [{"coding": [{"system": type_system, "code": type_code, "display": type_display}]}]
+
+        coverage_area_refs = []
+        for key in ("coverageArea.reference", "coverageArea.reference2"):
+            ref = ctx.csv_value(row, key)
+            if ref:
+                coverage_area_refs.append(
                     {
-                        "system": ctx.csv_value(row, "type.system"),
-                        "code": ctx.csv_value(row, "type.code"),
-                        "display": ctx.csv_value(row, "type.display"),
+                        "reference": ctx.infer_reference(
+                            ref,
+                            default_resource_type="Location",
+                            candidate_types=["Location"],
+                        )
                     }
-                ]
+                )
+
+        contained = []
+        contained_id = ctx.csv_value(row, "coverageArea.contained.id")
+        if contained_id:
+            contained_coverage = {
+                "resourceType": "Location",
+                "id": contained_id,
+                "meta": ctx.build_meta(HEALTH_CONNECT_SERVICE_COVERAGE_AREA_PROFILE),
+                "status": "active",
+                "name": ctx.csv_value(row, "coverageArea.contained.name"),
+                "address": {
+                    "line": [ctx.csv_value(row, "coverageArea.contained.address.line1")],
+                    "city": ctx.csv_value(row, "coverageArea.contained.address.city"),
+                    "state": ctx.csv_value(row, "coverageArea.contained.address.state"),
+                    "postalCode": ctx.csv_value(row, "coverageArea.contained.address.postalCode"),
+                    "country": ctx.csv_value(row, "coverageArea.contained.address.country") or "AU",
+                },
+                "managingOrganization": {
+                    "reference": ctx.csv_value(row, "providedBy.reference"),
+                },
             }
-        ]
-
-        available_time = [
-            {
-                "daysOfWeek": [ctx.csv_value(row, f"daysOfWeek{index}") for index in range(1, 6)],
-                "allDay": ctx.bool_value(ctx.csv_value(row, "allDay")),
-                "availableStartTime": start_value,
-                "_availableStartTime": start_extension,
-                "availableEndTime": end_value,
-                "_availableEndTime": end_extension,
-            }
-        ]
-        if ctx.csv_value(row, "availableTime2.daysOfWeek1"):
-            available_time.append(
-                {
-                    "daysOfWeek": [ctx.csv_value(row, f"availableTime2.daysOfWeek{index}") for index in range(1, 6)],
-                    "allDay": ctx.bool_value(ctx.csv_value(row, "availableTime2.allDay")),
-                    "availableStartTime": second_start_value,
-                    "_availableStartTime": second_start_extension,
-                    "availableEndTime": second_end_value,
-                    "_availableEndTime": second_end_extension,
-                }
-            )
-
-        location_refs = [ctx.csv_value(row, "location.reference")]
-        if ctx.csv_value(row, "location.reference2"):
-            location_refs.append(ctx.csv_value(row, "location.reference2"))
-
-        coverage_refs = [ctx.csv_value(row, "coverageArea.reference")]
-        if ctx.csv_value(row, "coverageArea.reference2"):
-            coverage_refs.append(ctx.csv_value(row, "coverageArea.reference2"))
-
-        endpoint_refs = [ctx.csv_value(row, "endpoint.reference")]
-        if ctx.csv_value(row, "endpoint.reference2"):
-            endpoint_refs.append(ctx.csv_value(row, "endpoint.reference2"))
+            contained.append(ctx.clean(contained_coverage))
+            coverage_area_refs.append({"reference": f"#{contained_id}"})
 
         healthcare_service = {
             "resourceType": "HealthcareService",
             "id": ctx.csv_value(row, "resource.id"),
             "meta": ctx.build_meta(HEALTH_CONNECT_HEALTHCARE_SERVICE_PROFILE, ctx.csv_value(row, "meta.lastUpdated")),
+            "contained": contained,
             "extension": [
                 {
                     "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/active-period",
@@ -111,12 +102,21 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
             "active": ctx.bool_value(ctx.csv_first(row, "active") or "true"),
             "providedBy": {"reference": ctx.csv_value(row, "providedBy.reference")},
             "type": service_type,
-            "location": [{"reference": ref} for ref in location_refs],
+            "location": [{"reference": ctx.csv_value(row, "location.reference")}],
             "name": ctx.csv_value(row, "name"),
             "appointmentRequired": ctx.bool_value(ctx.csv_value(row, "appointmentRequired")),
-            "coverageArea": [{"reference": ref} for ref in coverage_refs],
-            "endpoint": [{"reference": ref} for ref in endpoint_refs],
-            "availableTime": available_time,
+            "coverageArea": coverage_area_refs,
+            "endpoint": [{"reference": ctx.csv_value(row, "endpoint.reference")}],
+            "availableTime": [
+                {
+                    "daysOfWeek": [ctx.csv_value(row, f"daysOfWeek{index}") for index in range(1, 6)],
+                    "allDay": ctx.bool_value(ctx.csv_value(row, "allDay")),
+                    "availableStartTime": start_value,
+                    "_availableStartTime": start_extension,
+                    "availableEndTime": end_value,
+                    "_availableEndTime": end_extension,
+                }
+            ],
         }
         return ctx.clean(healthcare_service)
 
@@ -131,9 +131,8 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
         endpoint_index = ctx.random.randint(1, endpoint_pool)
         service_type = ctx.random.choice(
             [
-                ("310002000", "Assessment service"),
-                ("310001007", "Anaesthetic service"),
-                ("310016005", "Adult hearing aid service"),
+                ("224929004", "Healthcare service"),
+                ("224930009", "Services"),
             ]
         )
         start_value, start_extension = ctx.make_time_extension("08:00:00", "Australia/Sydney")

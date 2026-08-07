@@ -19,6 +19,19 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
         endpoint_identifier_type_system = ctx.csv_first(row, "identifier.HCEndpointIdentifier.type.coding.system") or "http://terminology.hl7.org/CodeSystem/v2-0203"
         endpoint_identifier_type_code = ctx.csv_first(row, "identifier.HCEndpointIdentifier.type.coding.code", "identifier.HCEndpointIdentifier.type.code") or "XX"
         endpoint_identifier_type_text = ctx.csv_first(row, "identifier.HCEndpointIdentifier.type.coding.display", "identifier.HCEndpointIdentifier.type.text") or "Organization Identifier"
+
+        if endpoint_identifier_type_code == "RI":
+            endpoint_identifier_type_code = "XX"
+            endpoint_identifier_type_text = "Organization Identifier"
+
+        if endpoint_identifier_system in {
+            ctx.SMD_TARGET_IDENTIFIER_SYSTEM,
+            ctx.SOURCE_NHSD_SYSTEM,
+            ctx.SOURCE_PCA_SYSTEM,
+            "http://terminology.hl7.org/CodeSystem/v2-0203#ResourceIdentifier",
+        }:
+            endpoint_identifier_system = ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM
+
         if payload_type_system == "AustralianEndpointPayloadTypesCodeSystem":
             payload_type_system = ctx.ENDPOINT_PAYLOAD_TYPE_SYSTEM
         endpoint = {
@@ -38,12 +51,6 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
                 "end": ctx.csv_value(row, "period.end"),
             },
             "address": ctx.csv_value(row, "address"),
-            "data": [
-                {
-                    "type": "certificate",
-                    "value": ctx.csv_value(row, "dataEnciphermentCertificate"),
-                }
-            ],
             "identifier": [
                 {
                     "system": smd_target_system,
