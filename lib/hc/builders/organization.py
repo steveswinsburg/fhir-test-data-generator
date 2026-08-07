@@ -8,6 +8,26 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
     resource_type = "Organization"
     csv_file = "Organization.data.csv"
 
+    def build_hpio_identifier_extensions(self, classification_code, classification_display, status_code, status_display):
+        return [
+            {
+                "url": "http://digitalhealth.gov.au/fhir/hcpd/StructureDefinition/hi-org-classification",
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": "http://digitalhealth.gov.au/fhir/hcpd/CodeSystem/hi-org-classification-cs",
+                            "code": classification_code,
+                            "display": classification_display,
+                        }
+                    ]
+                },
+            },
+            self.context.build_hpii_status_extension(
+                status_code=status_code,
+                status_display=status_display,
+            ),
+        ]
+
     def build_from_row(self, row):
         ctx = self.context
         hpio_system = "http://ns.electronichealth.net.au/id/hi/hpio/1.0"
@@ -34,20 +54,12 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
 
         identifiers = [
             {
-                "extension": [
-                    {
-                        "url": "http://digitalhealth.gov.au/fhir/hcpd/StructureDefinition/hi-org-classification",
-                        "valueCodeableConcept": {
-                            "coding": [
-                                {
-                                    "system": "http://digitalhealth.gov.au/fhir/hcpd/CodeSystem/hi-org-classification-cs",
-                                        "code": ctx.token_value(row, "hpio.coding.code"),
-                                    "display": hpio_type_display,
-                                }
-                            ]
-                        },
-                    }
-                ],
+                "extension": self.build_hpio_identifier_extensions(
+                    classification_code=ctx.token_value(row, "hpio.coding.code"),
+                    classification_display=hpio_type_display,
+                    status_code=ctx.csv_first(row, "identifier.hpio.status.code") or "A",
+                    status_display=ctx.csv_first(row, "identifier.hpio.status.display") or "Active",
+                ),
                 "type": ctx.build_identifier_type_from_row(
                     row,
                     "identifier.hpio",
@@ -123,22 +135,14 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
             "meta": ctx.build_meta(HEALTH_CONNECT_ORGANIZATION_PROFILE),
             "identifier": [
                 {
-                    "extension": [
-                        {
-                            "url": "http://digitalhealth.gov.au/fhir/hcpd/StructureDefinition/hi-org-classification",
-                            "valueCodeableConcept": {
-                                "coding": [
-                                    {
-                                        "system": "http://digitalhealth.gov.au/fhir/hcpd/CodeSystem/hi-org-classification-cs",
-                                        "code": "network",
-                                        "display": ctx.random.choice(["General Practice", "Public Hospital", "Allied Health Network"]),
-                                    }
-                                ]
-                            },
-                        }
-                    ],
-                        "type": ctx.build_identifier_type_for_system(hpio_system),
-                        "system": hpio_system,
+                    "extension": self.build_hpio_identifier_extensions(
+                        classification_code="network",
+                        classification_display=ctx.random.choice(["General Practice", "Public Hospital", "Allied Health Network"]),
+                        status_code="A",
+                        status_display="Active",
+                    ),
+                    "type": ctx.build_identifier_type_for_system(hpio_system),
+                    "system": hpio_system,
                     "value": f"80036{ctx.random_digits(11)}",
                 },
                     {
