@@ -140,8 +140,6 @@ def run_fhir_cli_validation(args, summaries):
     if not os.path.exists(ig_package):
         raise FileNotFoundError(f"FHIR validator IG package not found: {ig_package}")
 
-    os.makedirs(FHIR_VALIDATOR_TX_CACHE, exist_ok=True)
-
     command = [
         "java",
         "-jar",
@@ -151,13 +149,17 @@ def run_fhir_cli_validation(args, summaries):
         FHIR_VALIDATOR_VERSION,
         "-ig",
         ig_package,
-        "-txCache",
-        FHIR_VALIDATOR_TX_CACHE,
         "-output-style",
         "compact",
         "-level",
         args.validator_level,
     ]
+
+    if args.disable_tx:
+        command.extend(["-tx", "n/a"])
+    else:
+        os.makedirs(FHIR_VALIDATOR_TX_CACHE, exist_ok=True)
+        command.extend(["-txCache", FHIR_VALIDATOR_TX_CACHE])
 
     console.print()
     console.print(
@@ -166,7 +168,7 @@ def run_fhir_cli_validation(args, summaries):
             f"Input files: [bold]{len(json_files)}[/bold]\n"
             f"FHIR version: [bold]{FHIR_VALIDATOR_VERSION}[/bold]\n"
             f"IG package: [bold]{ig_package}[/bold]\n"
-            f"TX cache: [bold]{FHIR_VALIDATOR_TX_CACHE}[/bold]",
+            f"TX mode: [bold]{'disabled (-tx n/a)' if args.disable_tx else f'cache at {FHIR_VALIDATOR_TX_CACHE}'}[/bold]",
             title="FHIR Validator CLI",
             border_style="cyan",
         )
@@ -221,6 +223,11 @@ def parse_args(argv=None):
         choices=["hints", "warnings", "errors"],
         default="errors",
         help="Minimum issue level reported by validator jar",
+    )
+    generate_parser.add_argument(
+        "--disable-tx",
+        action="store_true",
+        help="Disable external terminology server lookups during validation (passes -tx n/a to validator)",
     )
     generate_parser.add_argument(
         "--fail-on-validation",

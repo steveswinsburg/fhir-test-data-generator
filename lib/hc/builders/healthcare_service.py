@@ -18,6 +18,7 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
         type_system = ctx.csv_value(row, "type.system")
         type_code = ctx.csv_value(row, "type.code")
         type_display = ctx.csv_value(row, "type.display")
+        referral_information = ctx.csv_value(row, "referralInformation")
 
         service_type = [{"coding": [{"system": type_system, "code": type_code, "display": type_display}]}]
 
@@ -58,36 +59,41 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
             contained.append(ctx.clean(contained_coverage))
             coverage_area_refs.append({"reference": f"#{contained_id}"})
 
+        extensions = [
+            {
+                "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/active-period",
+                "valuePeriod": {
+                    "start": ctx.csv_value(row, "activePeriod.start"),
+                    "end": ctx.csv_value(row, "activePeriod.end"),
+                },
+            },
+            {
+                "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/iar-levels-of-care",
+                "valueCodeableConcept": {
+                    "coding": [
+                        {
+                            "system": ctx.csv_value(row, "iarLevel.system"),
+                            "code": ctx.csv_value(row, "iarLevel.code"),
+                            "display": ctx.csv_value(row, "iarLevel.display"),
+                        }
+                    ]
+                },
+            },
+        ]
+        if referral_information:
+            extensions.append(
+                {
+                    "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/referral-information-for-referrer",
+                    "valueMarkdown": referral_information,
+                }
+            )
+
         healthcare_service = {
             "resourceType": "HealthcareService",
             "id": ctx.csv_value(row, "resource.id"),
             "meta": ctx.build_meta(HEALTH_CONNECT_HEALTHCARE_SERVICE_PROFILE, ctx.csv_value(row, "meta.lastUpdated")),
             "contained": contained,
-            "extension": [
-                {
-                    "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/active-period",
-                    "valuePeriod": {
-                        "start": ctx.csv_value(row, "activePeriod.start"),
-                        "end": ctx.csv_value(row, "activePeriod.end"),
-                    },
-                },
-                {
-                    "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/referral-information-for-referrer",
-                    "valueMarkdown": ctx.csv_value(row, "referralInformation"),
-                },
-                {
-                    "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/iar-levels-of-care",
-                    "valueCodeableConcept": {
-                        "coding": [
-                            {
-                                "system": ctx.csv_value(row, "iarLevel.system"),
-                                "code": ctx.csv_value(row, "iarLevel.code"),
-                                "display": ctx.csv_value(row, "iarLevel.display"),
-                            }
-                        ]
-                    },
-                },
-            ],
+            "extension": extensions,
             "identifier": [
                 ctx.build_source_identifier(
                     source_system=source_system,
