@@ -1,4 +1,5 @@
 from ..base import BaseResourceGenerator
+from datetime import datetime, timezone
 
 
 HEALTH_CONNECT_PROVENANCE_PROFILE = "http://digitalhealth.gov.au/fhir/hcpd/StructureDefinition/hcpd-provenance"
@@ -7,6 +8,9 @@ HEALTH_CONNECT_PROVENANCE_PROFILE = "http://digitalhealth.gov.au/fhir/hcpd/Struc
 class HealthConnectProvenanceGenerator(BaseResourceGenerator):
     resource_type = "Provenance"
     csv_file = "Provenance.data.csv"
+
+    def current_utc_instant(self):
+        return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
     def build_from_row(self, row):
         ctx = self.context
@@ -105,7 +109,7 @@ class HealthConnectProvenanceGenerator(BaseResourceGenerator):
             "id": ctx.bulk_resource_id("provenance", index),
             "meta": ctx.build_meta(HEALTH_CONNECT_PROVENANCE_PROFILE),
             "target": [{"extension": [{"url": "http://hl7.org/fhir/StructureDefinition/targetPath", "valueString": target_path}], "reference": target_ref}],
-            "recorded": ctx.faker.iso8601(),
+            "recorded": self.current_utc_instant(),
             "activity": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-DataOperation", "code": "UPDATE"}]},
             "agent": [{"type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/provenance-participant-type", "code": "author"}]}, "role": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/contractsignertypecodes", "code": "AMENDER"}]}], "who": {"reference": agent_who_ref}}],
             "entity": [{"role": "source", "what": {"reference": target_ref}}],

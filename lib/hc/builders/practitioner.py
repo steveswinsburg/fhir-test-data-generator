@@ -8,6 +8,22 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
     resource_type = "Practitioner"
     csv_file = "Practitioner.data.csv"
 
+    def generate_valid_hpii_value(self):
+        # HPI-I must be 16 digits with 800361 prefix and a valid Luhn check digit.
+        base = "800361" + self.context.random_digits(9)
+        digits = [int(ch) for ch in base]
+        total = 0
+        parity = (len(digits) + 1) % 2
+        for idx, digit in enumerate(digits):
+            value = digit
+            if idx % 2 == parity:
+                value *= 2
+                if value > 9:
+                    value -= 9
+            total += value
+        check_digit = (10 - (total % 10)) % 10
+        return f"{base}{check_digit}"
+
     def build_from_row(self, row):
         ctx = self.context
         practitioner_id = row["resource.id"]
@@ -177,7 +193,7 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                     ],
                     "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "NPI"}]},
                     "system": "http://ns.electronichealth.net.au/id/hi/hpii/1.0",
-                    "value": f"80036{ctx.random_digits(11)}",
+                    "value": self.generate_valid_hpii_value(),
                 }
             ],
             "name": [
