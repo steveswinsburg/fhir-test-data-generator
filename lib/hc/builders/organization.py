@@ -8,6 +8,22 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
     resource_type = "Organization"
     csv_file = "Organization.data.csv"
 
+    def generate_valid_hpio_value(self):
+        # HPI-O must be 16 digits with 800362 prefix and a valid Luhn check digit.
+        base = "800362" + self.context.random_digits(9)
+        digits = [int(ch) for ch in base]
+        total = 0
+        parity = (len(digits) + 1) % 2
+        for idx, digit in enumerate(digits):
+            value = digit
+            if idx % 2 == parity:
+                value *= 2
+                if value > 9:
+                    value -= 9
+            total += value
+        check_digit = (10 - (total % 10)) % 10
+        return f"{base}{check_digit}"
+
     def build_hpio_identifier_extensions(self, classification_code, classification_display, status_code, status_display):
         return [
             {
@@ -137,21 +153,21 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                 {
                     "extension": self.build_hpio_identifier_extensions(
                         classification_code="network",
-                        classification_display=ctx.random.choice(["General Practice", "Public Hospital", "Allied Health Network"]),
+                        classification_display="Network",
                         status_code="A",
                         status_display="Active",
                     ),
                     "type": ctx.build_identifier_type_for_system(hpio_system),
                     "system": hpio_system,
-                    "value": f"80036{ctx.random_digits(11)}",
+                    "value": self.generate_valid_hpio_value(),
                 },
                     {
-                        "type": ctx.build_identifier_type_for_system(abn_system),
+                        "type": {"text": "ABN"},
                         "system": abn_system,
                         "value": ctx.random_digits(11),
                     },
                     {
-                        "type": ctx.build_identifier_type_for_system(acn_system),
+                        "type": {"text": "ACN"},
                         "system": acn_system,
                         "value": ctx.random_digits(9),
                     },

@@ -125,9 +125,13 @@ def run_fhir_cli_validation(args, summaries):
     for summary in summaries:
         file_paths.extend(summary.get("output_files", []))
 
-    json_files = [path for path in file_paths if path.lower().endswith(".json")]
-    if not json_files:
-        console.print("[yellow]Validation skipped: no JSON files produced in this run.[/yellow]")
+    validate_files = [
+        path
+        for path in file_paths
+        if path.lower().endswith(".json") or path.lower().endswith(".ndjson")
+    ]
+    if not validate_files:
+        console.print("[yellow]Validation skipped: no JSON/NDJSON files produced in this run.[/yellow]")
         return 0
 
     if not os.path.exists(FHIR_VALIDATOR_JAR):
@@ -144,7 +148,7 @@ def run_fhir_cli_validation(args, summaries):
         "java",
         "-jar",
         FHIR_VALIDATOR_JAR,
-        *json_files,
+        *validate_files,
         "-version",
         FHIR_VALIDATOR_VERSION,
         "-ig",
@@ -165,7 +169,7 @@ def run_fhir_cli_validation(args, summaries):
     console.print(
         Panel.fit(
             f"Validator: [bold]{FHIR_VALIDATOR_JAR}[/bold]\n"
-            f"Input files: [bold]{len(json_files)}[/bold]\n"
+            f"Input files: [bold]{len(validate_files)}[/bold]\n"
             f"FHIR version: [bold]{FHIR_VALIDATOR_VERSION}[/bold]\n"
             f"IG package: [bold]{ig_package}[/bold]\n"
             f"TX mode: [bold]{'disabled (-tx n/a)' if args.disable_tx else f'cache at {FHIR_VALIDATOR_TX_CACHE}'}[/bold]",
