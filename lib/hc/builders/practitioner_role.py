@@ -8,6 +8,10 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
     resource_type = "PractitionerRole"
     csv_file = "PractitionerRole.data.csv"
 
+    def random_active(self):
+        # active is required by profile; mix true/false only.
+        return self.context.random.choice([True, True, False])
+
     def build_from_row(self, row):
         ctx = self.context
         identifiers = [
@@ -152,6 +156,7 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
         role_prefix = ctx.random.choice(["Dr.", "A/Prof.", "Prof."])
         role_given = ctx.faker.first_name_male() if role_gender == "male" else ctx.faker.first_name_female()
         role_family = ctx.faker.last_name()
+        active_value = self.random_active()
 
         available_time = []
         for day, start_time, end_time in day_templates:
@@ -204,7 +209,6 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
                     "value": reg_number,
                 },
             ],
-            "active": True,
             "period": {"start": ctx.faker.date_between(start_date="-4y", end_date="today").isoformat()},
             "practitioner": {"reference": ctx.practitioner_reference(practitioner_index)},
             "organization": {"reference": ctx.organization_reference(organization_index)},
@@ -214,4 +218,5 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
             "telecom": [{"system": "phone", "value": ctx.faker.phone_number(), "use": "work"}],
             "availableTime": available_time,
         }
+        practitioner_role["active"] = active_value
         return ctx.clean(practitioner_role)

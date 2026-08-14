@@ -9,6 +9,10 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
     resource_type = "HealthcareService"
     csv_file = "HealthcareService.data.csv"
 
+    def random_active(self):
+        # active is required by profile; mix true/false only.
+        return self.context.random.choice([True, True, False])
+
     def build_from_row(self, row):
         ctx = self.context
         start_value, start_extension = ctx.make_time_extension(ctx.csv_value(row, "availableStartTime"), ctx.csv_value(row, "timeZone"))
@@ -141,6 +145,7 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
                 ("224930009", "Services"),
             ]
         )
+        active_value = self.random_active()
         start_value, start_extension = ctx.make_time_extension("08:00:00", "Australia/Sydney")
         end_value, end_extension = ctx.make_time_extension("17:00:00", "Australia/Sydney")
         healthcare_service = {
@@ -173,7 +178,6 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
                     "value": f"HS{index:012d}",
                 }
             ],
-            "active": True,
             "providedBy": {"reference": ctx.organization_reference(organization_index)},
             "type": [{"coding": [{"system": "http://snomed.info/sct", "code": service_type[0], "display": service_type[1]}]}],
             "location": [{"reference": ctx.location_reference(location_index)}],
@@ -183,4 +187,5 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
             "endpoint": [{"reference": ctx.endpoint_reference(endpoint_index)}],
             "availableTime": [{"daysOfWeek": ["mon", "tue", "wed", "thu", "fri"], "allDay": False, "availableStartTime": start_value, "_availableStartTime": start_extension, "availableEndTime": end_value, "_availableEndTime": end_extension}],
         }
+        healthcare_service["active"] = active_value
         return ctx.clean(healthcare_service)

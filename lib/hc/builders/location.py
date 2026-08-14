@@ -8,6 +8,8 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
     resource_type = "Location"
     csv_file = "Location.data.csv"
 
+    VALID_LOCATION_STATUSES = ["active", "inactive"]
+
     def build_from_row(self, row):
         ctx = self.context
         source_system = ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM
@@ -101,7 +103,7 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             [
                 ("MOBL", "Mobile Unit"),
                 ("HOSP", "Hospital"),
-                ("OF", "Office"),
+                ("OF", "Outpatient facility"),
             ]
         )
         location = {
@@ -119,7 +121,7 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
                     "value": ctx.random_digits(6),
                 }
             ],
-            "status": "active",
+            "status": ctx.random.choice(self.VALID_LOCATION_STATUSES),
             "name": f"{ctx.normalize_text(ctx.faker.company())} {location_type[1]}",
             "alias": [ctx.normalize_text(ctx.faker.city())],
             "type": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode", "code": location_type[0], "display": location_type[1]}]}],

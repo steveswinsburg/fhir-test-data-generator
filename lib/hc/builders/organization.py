@@ -8,6 +8,19 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
     resource_type = "Organization"
     csv_file = "Organization.data.csv"
 
+    HI_SERVICES_STATUS_CHOICES = [
+        ("A", "Active"),
+        ("D", "Deactivated"),
+        ("R", "Retired"),
+    ]
+
+    def random_hi_services_status(self):
+        return self.context.random.choice(self.HI_SERVICES_STATUS_CHOICES)
+
+    def random_active(self):
+        # active is required by profile; mix true/false only.
+        return self.context.random.choice([True, True, False])
+
     def generate_valid_hpio_value(self):
         # HPI-O must be 16 digits with 800362 prefix and a valid Luhn check digit.
         base = "800362" + self.context.random_digits(9)
@@ -145,6 +158,8 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
         company_name = f"{company_root} {ctx.random.choice(['Clinic', 'Hospital', 'Health', 'Medical Centre'])}".strip()
         website = f"https://{ctx.slugify(company_name)}.example.com.au"
         alias = ctx.normalize_text(company_root.split()[0]) if company_root else "HealthConnect"
+        status_code, status_display = self.random_hi_services_status()
+        active_value = self.random_active()
         organization = {
             "resourceType": "Organization",
             "id": org_id,
@@ -154,8 +169,8 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                     "extension": self.build_hpio_identifier_extensions(
                         classification_code="network",
                         classification_display="Network",
-                        status_code="A",
-                        status_display="Active",
+                        status_code=status_code,
+                        status_display=status_display,
                     ),
                     "type": ctx.build_identifier_type_for_system(hpio_system),
                     "system": hpio_system,
@@ -172,7 +187,6 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                         "value": ctx.random_digits(9),
                     },
             ],
-            "active": True,
             "name": company_name,
             "alias": [alias],
             "telecom": [
@@ -191,4 +205,5 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                 }
             ],
         }
+        organization["active"] = active_value
         return ctx.clean(organization)

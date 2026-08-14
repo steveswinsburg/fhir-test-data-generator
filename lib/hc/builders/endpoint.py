@@ -8,6 +8,8 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
     resource_type = "Endpoint"
     csv_file = "Endpoint.data.csv"
 
+    VALID_ENDPOINT_STATUSES = ["active", "off"]
+
     def build_from_row(self, row):
         ctx = self.context
         payload_mime_types = [ctx.csv_value(row, f"payloadMimeType{index}") for index in range(1, 4)]
@@ -94,7 +96,7 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
             "resourceType": "Endpoint",
             "id": ctx.bulk_resource_id("endpoint", index),
             "meta": ctx.build_meta(HEALTH_CONNECT_ENDPOINT_PROFILE),
-            "status": "active",
+            "status": ctx.random.choice(self.VALID_ENDPOINT_STATUSES),
             "connectionType": {
                 "system": "http://terminology.hl7.org.au/CodeSystem/endpoint-connection-type",
                 "code": "secure-messaging",

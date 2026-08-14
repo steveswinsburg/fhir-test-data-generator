@@ -8,6 +8,19 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
     resource_type = "Practitioner"
     csv_file = "Practitioner.data.csv"
 
+    HI_SERVICES_STATUS_CHOICES = [
+        ("A", "Active"),
+        ("D", "Deactivated"),
+        ("R", "Retired"),
+    ]
+
+    def random_hi_services_status(self):
+        return self.context.random.choice(self.HI_SERVICES_STATUS_CHOICES)
+
+    def random_active_or_none(self):
+        # Practitioner.active is optional; omit it for about half of generated records.
+        return self.context.random.choice([None, None, True, False])
+
     def generate_valid_hpii_value(self):
         # HPI-I must be 16 digits with 800361 prefix and a valid Luhn check digit.
         base = "800361" + self.context.random_digits(9)
@@ -159,6 +172,8 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
         text_name = " ".join(part for part in [prefix, given_name, family_name] if part)
         phone = ctx.faker.phone_number()
         email = f"{given_name}.{family_name}@example.com".lower().replace(" ", "")
+        status_code, status_display = self.random_hi_services_status()
+        active_value = self.random_active_or_none()
 
         practitioner = {
             "resourceType": "Practitioner",
@@ -187,8 +202,8 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                 {
                     "extension": [
                         ctx.build_hpii_status_extension(
-                            status_code="A",
-                            status_display="Active",
+                            status_code=status_code,
+                            status_display=status_display,
                         )
                     ],
                     "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "NPI"}]},
@@ -222,6 +237,8 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
             ],
             "qualification": [self.build_default_qualification({}, practitioner_id)],
         }
+        if active_value is not None:
+            practitioner["active"] = active_value
         return ctx.clean(practitioner)
 
     def build_default_qualification(self, row, practitioner_id):
