@@ -8,6 +8,8 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
     resource_type = "Practitioner"
     csv_file = "Practitioner.data.csv"
 
+    PRESCRIBER_NUMBER_SYSTEM = "http://ns.electronichealth.net.au/id/medicare-prescriber-number"
+
     HI_SERVICES_STATUS_CHOICES = [
         ("A", "Active"),
         ("D", "Deactivated"),
@@ -75,6 +77,10 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                 }
             )
 
+        prescriber_number = ctx.csv_value(row, "identifier.prescriber.value")
+        if prescriber_number:
+            identifiers.append(self.build_prescriber_identifier(prescriber_number))
+
         telecom = []
         for index in (1, 2):
             system = ctx.csv_value(row, f"telecom{index}.system")
@@ -118,6 +124,8 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
             ],
             "telecom": telecom,
             "gender": ctx.csv_value(row, "gender"),
+            "birthDate": ctx.csv_value(row, "birthDate"),
+            "photo": self.build_photo(ctx.csv_value(row, "photo.url"), name_text),
             "address": [
                 {
                     "text": ctx.csv_value(row, "address.text"),
@@ -174,6 +182,12 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
         email = f"{given_name}.{family_name}@example.com".lower().replace(" ", "")
         status_code, status_display = self.random_hi_services_status()
         active_value = self.random_active_or_none()
+        birth_date = ctx.faker.date_of_birth(minimum_age=25, maximum_age=70).isoformat()
+
+        if gender == "male":
+            gender_identity_code, gender_identity_display = "446151000124109", "Identifies as male gender"
+        else:
+            gender_identity_code, gender_identity_display = "446141000124107", "Identifies as female gender"
 
         practitioner = {
             "resourceType": "Practitioner",
@@ -196,7 +210,24 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                             },
                         }
                     ],
-                }
+                },
+                {
+                    "url": "http://hl7.org/fhir/StructureDefinition/individual-genderIdentity",
+                    "extension": [
+                        {
+                            "url": "value",
+                            "valueCodeableConcept": {
+                                "coding": [
+                                    {
+                                        "system": "http://snomed.info/sct",
+                                        "code": gender_identity_code,
+                                        "display": gender_identity_display,
+                                    }
+                                ]
+                            },
+                        }
+                    ],
+                },
             ],
             "identifier": [
                 {
@@ -209,7 +240,8 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                     "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "NPI"}]},
                     "system": "http://ns.electronichealth.net.au/id/hi/hpii/1.0",
                     "value": self.generate_valid_hpii_value(),
-                }
+                },
+                self.build_prescriber_identifier(ctx.random_digits(7)),
             ],
             "name": [
                 {
@@ -225,6 +257,8 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                 {"system": "email", "value": email, "use": "work"},
             ],
             "gender": gender,
+            "birthDate": birth_date,
+            "photo": self.build_photo(f"https://example.com/photo/{practitioner_id}.png", text_name),
             "address": [
                 {
                     "text": ctx.faker.address().replace("\n", ", "),
@@ -240,6 +274,30 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
         if active_value is not None:
             practitioner["active"] = active_value
         return ctx.clean(practitioner)
+
+    def build_prescriber_identifier(self, value):
+        return {
+            "type": {
+                "coding": [
+                    {
+                        "system": self.context.V2_0203_SYSTEM,
+                        "code": "PRES",
+                        "display": "Prescriber Number",
+                    }
+                ],
+                "text": "Prescriber Number",
+            },
+            "system": self.PRESCRIBER_NUMBER_SYSTEM,
+            "value": value,
+        }
+
+    def build_photo(self, url, name_text=None):
+        if not url:
+            return []
+        photo = {"contentType": "image/png", "url": url}
+        if name_text:
+            photo["title"] = f"Photo of {name_text}"
+        return [photo]
 
     def build_default_qualification(self, row, practitioner_id):
         registration_number = self.default_registration_number(practitioner_id)

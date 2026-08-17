@@ -60,7 +60,7 @@ class HealthConnectContext(ProfileContext):
         return normalized or "healthconnect"
 
     def bulk_resource_id(self, resource_name, index):
-        return f"healthconnect-{resource_name}-{index:07d}"
+        return f"example-healthconnect-{resource_name}-{index}"
 
     def make_time_extension(self, time_value, timezone):
         if not time_value:
