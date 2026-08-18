@@ -14,3 +14,7 @@ example-healthconnect-coverage-area-12,2025-09-12T10:00:00Z,active,Darwin Catchm
 example-healthconnect-coverage-area-13,2025-09-13T10:00:00Z,active,Ballarat Catchment,22 Sturt Street,,Ballarat,VIC,3350,AU,Organization/example-healthconnect-organization-13
 example-healthconnect-coverage-area-14,2025-09-14T10:00:00Z,active,Cairns Catchment,45 The Esplanade,,Cairns,QLD,4870,AU,Organization/example-healthconnect-organization-14
 example-healthconnect-coverage-area-15,2025-09-15T10:00:00Z,active,Newcastle Catchment,3 Hunter Street,,Newcastle,NSW,2300,AU,Organization/example-healthconnect-organization-15
+example-healthconnect-coverage-area-16,2025-09-16T10:00:00Z,active,Balmain Cardiac Catchment,10 Darling Street,,Balmain,NSW,2041,AU,Organization/example-healthconnect-organization-16
+example-healthconnect-coverage-area-17,2025-09-16T10:05:00Z,active,Balmain Oncology Catchment,1 Hospital Road,,Balmain,NSW,2041,AU,Organization/example-healthconnect-organization-17
+example-healthconnect-coverage-area-18,2025-09-16T10:10:00Z,active,Garfield Pathology Catchment,7 Railway Parade,,Garfield,NSW,2150,AU,Organization/example-healthconnect-organization-19
+example-healthconnect-coverage-area-19,2025-09-16T10:15:00Z,active,Cronulla GP Catchment,25 Cronulla Street,,Cronulla,NSW,2230,AU,Organization/example-healthconnect-organization-18
