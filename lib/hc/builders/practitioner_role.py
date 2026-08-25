@@ -109,7 +109,17 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
                 )
             )
 
-        healthcare_services = [{"reference": ctx.csv_value(row, "healthcareService")}]
+        healthcare_services = []
+        for field in ("healthcareService", "healthcareService2"):
+            reference = ctx.csv_value(row, field)
+            if reference:
+                healthcare_services.append({"reference": reference})
+
+        endpoints = []
+        for field in ("endpoint.reference", "endpoint2.reference"):
+            reference = ctx.csv_value(row, field)
+            if reference:
+                endpoints.append({"reference": reference})
 
         practitioner_role = {
             "resourceType": "PractitionerRole",
@@ -127,6 +137,7 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
             "code": [{"coding": [{"system": "http://snomed.info/sct", "code": ctx.csv_value(row, "code.code"), "display": ctx.csv_value(row, "code.display")}]}],
             "location": [{"reference": ctx.csv_value(row, "location.reference")}],
             "healthcareService": healthcare_services,
+            "endpoint": endpoints,
             "telecom": telecom,
             "availableTime": available_time,
         }
