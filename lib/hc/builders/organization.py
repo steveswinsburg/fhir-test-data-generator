@@ -145,10 +145,6 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                     "country": ctx.csv_value(row, "address.country"),
                 }
             ],
-            "endpoint": [
-                {"reference": ctx.csv_value(row, "endpoint.reference")},
-                {"reference": ctx.csv_value(row, "endpoint2.reference")},
-            ],
         }
         return ctx.clean(organization)
 
