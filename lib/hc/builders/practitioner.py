@@ -300,7 +300,7 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
         return [photo]
 
     def build_default_qualification(self, row, practitioner_id):
-        registration_number = self.default_registration_number(practitioner_id)
+        registration_number = row.get("qualification.identifier.value") or self.default_registration_number(practitioner_id)
         profession = row.get("qualification.code.text") or self.context.random.choice(
             [
                 "General Practitioner",
@@ -310,6 +310,7 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                 "Psychologist",
             ]
         )
+        issuer_display = row.get("qualification.issuer.display") or "Ahpra"
         return {
             "identifier": [
                 {
@@ -326,7 +327,7 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
                 }
             ],
             "code": {"text": profession},
-            "issuer": {"display": "Ahpra"},
+            "issuer": {"display": issuer_display},
         }
 
     def default_registration_number(self, practitioner_id):
