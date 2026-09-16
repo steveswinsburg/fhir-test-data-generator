@@ -15,8 +15,10 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
         source_system = ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM
         source_value = ctx.csv_first(row, "identifier.HCSourceIdentifier.value")
 
-        address = {
-            "extension": [
+        address_identifier_value = ctx.csv_value(row, "address.valueIdentifier.value")
+        address_extensions = []
+        if address_identifier_value:
+            address_extensions.append(
                 {
                     "url": ctx.csv_value(row, "address.extension.url") or "http://hl7.org.au/fhir/StructureDefinition/address-identifier",
                     "valueIdentifier": {
@@ -24,10 +26,13 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
                             text=ctx.csv_first(row, "address.valueIdentifier.type.text", "address.valueIdentifier.type")
                         ),
                         "system": ctx.csv_value(row, "address.valueIdentifier.system"),
-                        "value": ctx.csv_value(row, "address.valueIdentifier.value"),
+                        "value": address_identifier_value,
                     },
                 }
-            ],
+            )
+
+        address = {
+            "extension": address_extensions,
             "type": ctx.token_value(row, "address.type"),
             "text": ctx.csv_value(row, "address.text"),
             "line": [value for value in [ctx.csv_value(row, "address.line1"), ctx.csv_value(row, "address.line2")] if value],
