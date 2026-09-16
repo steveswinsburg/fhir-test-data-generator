@@ -92,6 +92,40 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
                 }
             )
 
+        service_provision_codes = []
+        for index in range(1, 4):
+            billing_code = ctx.csv_value(row, f"billing{index}.code")
+            if not billing_code:
+                continue
+            service_provision_codes.append(
+                {
+                    "coding": [
+                        {
+                            "system": ctx.csv_value(row, f"billing{index}.system") or "http://digitalhealth.gov.au/fhir/hcpd/CodeSystem/service-provision-cs",
+                            "code": billing_code,
+                            "display": ctx.csv_value(row, f"billing{index}.display"),
+                        }
+                    ]
+                }
+            )
+
+        communication = []
+        for index in range(1, 4):
+            language_code = ctx.csv_value(row, f"communication{index}.code")
+            if not language_code:
+                continue
+            communication.append(
+                {
+                    "coding": [
+                        {
+                            "system": ctx.csv_value(row, f"communication{index}.system") or "urn:ietf:bcp:47",
+                            "code": language_code,
+                            "display": ctx.csv_value(row, f"communication{index}.display"),
+                        }
+                    ]
+                }
+            )
+
         healthcare_service = {
             "resourceType": "HealthcareService",
             "id": ctx.csv_value(row, "resource.id"),
@@ -116,6 +150,8 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
             "name": ctx.csv_value(row, "name"),
             "appointmentRequired": ctx.bool_value(ctx.csv_value(row, "appointmentRequired")),
             "coverageArea": coverage_area_refs,
+            "serviceProvisionCode": service_provision_codes,
+            "communication": communication,
             "endpoint": [{"reference": ctx.csv_value(row, "endpoint.reference")}],
             "availableTime": [
                 {

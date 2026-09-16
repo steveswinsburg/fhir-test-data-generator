@@ -51,6 +51,41 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             },
         }
 
+        extensions = [preferred_postal]
+        for index in range(1, 4):
+            amenity_code = ctx.csv_value(row, f"amenity{index}.code")
+            if not amenity_code:
+                continue
+            extensions.append(
+                {
+                    "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/amenity",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": ctx.csv_value(row, f"amenity{index}.system") or "https://healthterminologies.gov.au/fhir/CodeSystem/facility-amenity-1",
+                                "code": amenity_code,
+                                "display": ctx.csv_value(row, f"amenity{index}.display"),
+                            }
+                        ]
+                    },
+                }
+            )
+
+        physical_type_code = ctx.csv_value(row, "physicalType.coding.code")
+        physical_type = (
+            {
+                "coding": [
+                    {
+                        "system": ctx.csv_value(row, "physicalType.coding.system") or "http://terminology.hl7.org/CodeSystem/location-physical-type",
+                        "code": physical_type_code,
+                        "display": ctx.csv_value(row, "physicalType.coding.display"),
+                    }
+                ]
+            }
+            if physical_type_code
+            else None
+        )
+
         location = {
             "resourceType": "Location",
             "id": ctx.csv_value(row, "resource.id"),
@@ -85,12 +120,13 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
                 }
             ],
             "address": address,
+            "physicalType": physical_type,
             "position": {
                 "longitude": ctx.float_value(ctx.csv_value(row, "position.longitude")),
                 "latitude": ctx.float_value(ctx.csv_value(row, "position.latitude")),
             },
             "managingOrganization": {"reference": ctx.csv_value(row, "managingOrganization")},
-            "extension": [preferred_postal],
+            "extension": extensions,
         }
         return ctx.clean(location)
 
