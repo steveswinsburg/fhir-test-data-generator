@@ -125,6 +125,21 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
             if value:
                 telecom.append({"system": system, "value": value, "use": use})
 
+        org_type = []
+        type_code = ctx.csv_value(row, "type.code")
+        if type_code:
+            org_type.append(
+                {
+                    "coding": [
+                        {
+                            "system": ctx.csv_value(row, "type.system") or "http://snomed.info/sct",
+                            "code": type_code,
+                            "display": ctx.csv_value(row, "type.display"),
+                        }
+                    ]
+                }
+            )
+
         organization = {
             "resourceType": "Organization",
             "id": ctx.csv_value(row, "resource.id") or ctx.csv_value(row, "name").lower().replace(" ", "-"),
@@ -133,6 +148,7 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
             "identifier": identifiers,
             "active": ctx.bool_value(ctx.csv_first(row, "active") or "true"),
             "name": ctx.csv_value(row, "name"),
+            "type": org_type,
             "alias": [ctx.csv_value(row, "alias")] if ctx.csv_value(row, "alias") else [],
             "telecom": telecom,
             "address": [

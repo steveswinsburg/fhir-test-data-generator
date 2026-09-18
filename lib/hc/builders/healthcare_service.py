@@ -26,6 +26,39 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
 
         service_type = [{"coding": [{"system": type_system, "code": type_code, "display": type_display}]}]
 
+        specialty = []
+        specialty_code = ctx.csv_value(row, "specialty.code")
+        if specialty_code:
+            specialty.append(
+                {
+                    "coding": [
+                        {
+                            "system": ctx.csv_value(row, "specialty.system") or "http://snomed.info/sct",
+                            "code": specialty_code,
+                            "display": ctx.csv_value(row, "specialty.display"),
+                        }
+                    ]
+                }
+            )
+
+        eligibility = []
+        eligibility_code = ctx.csv_value(row, "eligibility.code")
+        if eligibility_code:
+            eligibility.append(
+                {
+                    "code": {
+                        "coding": [
+                            {
+                                "system": ctx.csv_value(row, "eligibility.system")
+                                or "https://healthterminologies.gov.au/fhir/CodeSystem/service-eligibility-2",
+                                "code": eligibility_code,
+                                "display": ctx.csv_value(row, "eligibility.display"),
+                            }
+                        ]
+                    }
+                }
+            )
+
         coverage_area_refs = []
         for key in ("coverageArea.reference", "coverageArea.reference2"):
             ref = ctx.csv_value(row, key)
@@ -92,6 +125,23 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
                 }
             )
 
+        new_patient_availability_code = ctx.csv_value(row, "newPatientAvailability.code")
+        if new_patient_availability_code:
+            extensions.append(
+                {
+                    "url": "http://digitalhealth.gov.au/fhir/cc/StructureDefinition/new-patient-availability",
+                    "valueCodeableConcept": {
+                        "coding": [
+                            {
+                                "system": "https://healthterminologies.gov.au/fhir/CodeSystem/new-patient-availability-1",
+                                "code": new_patient_availability_code,
+                                "display": ctx.csv_value(row, "newPatientAvailability.display"),
+                            }
+                        ]
+                    },
+                }
+            )
+
         service_provision_codes = []
         for index in range(1, 4):
             billing_code = ctx.csv_value(row, f"billing{index}.code")
@@ -146,6 +196,8 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
             "active": ctx.bool_value(ctx.csv_first(row, "active") or "true"),
             "providedBy": {"reference": ctx.csv_value(row, "providedBy.reference")},
             "type": service_type,
+            "specialty": specialty,
+            "eligibility": eligibility,
             "location": [{"reference": ctx.csv_value(row, "location.reference")}],
             "name": ctx.csv_value(row, "name"),
             "appointmentRequired": ctx.bool_value(ctx.csv_value(row, "appointmentRequired")),
