@@ -56,7 +56,9 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
             },
         }
 
-        extensions = [preferred_postal]
+        extensions = []
+        if ctx.clean(preferred_postal["valueAddress"]):
+            extensions.append(preferred_postal)
         for index in range(1, 4):
             amenity_code = ctx.csv_value(row, f"amenity{index}.code")
             if not amenity_code:
