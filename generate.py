@@ -1,5 +1,6 @@
 import argparse
 import os
+import random
 import re
 import subprocess
 import sys
@@ -96,7 +97,7 @@ def generators_for_args(args):
     return generators
 
 
-def print_generation_summary(ig, mode, output_dir, summaries):
+def print_generation_summary(ig, mode, output_dir, summaries, seed):
     summary_table = Table(title="Generation Summary")
     summary_table.add_column("Resource Type", style="cyan")
     summary_table.add_column("Generated", justify="right", style="green")
@@ -112,7 +113,8 @@ def print_generation_summary(ig, mode, output_dir, summaries):
     console.print()
     console.print(
         Panel.fit(
-            f"IG: [bold]{ig}[/bold]\nMode: [bold]{mode}[/bold]\nOutput: [bold]{output_dir}[/bold]",
+            f"IG: [bold]{ig}[/bold]\nMode: [bold]{mode}[/bold]\nOutput: [bold]{output_dir}[/bold]\n"
+            f"Seed: [bold]{seed}[/bold] (pass --seed {seed} to reproduce this exact data)",
             title="FHIR Test Data Generator",
             border_style="green",
         )
@@ -215,7 +217,14 @@ def parse_args(argv=None):
     generate_parser.add_argument("--ig", required=True, help="The IG package to use")
     generate_parser.add_argument("--mode", required=True, choices=["csv", "bulk"], help="Generation mode")
     generate_parser.add_argument("--count", type=int, default=100, help="Resource count for bulk mode")
-    generate_parser.add_argument("--seed", type=int, default=42, help="Seed for deterministic bulk generation")
+    generate_parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed for deterministic bulk generation. If omitted, a random seed is chosen each run "
+        "(printed in the generation summary) so repeated runs produce distinct content/IDs. Pass an "
+        "explicit value to reproduce a previous run exactly.",
+    )
     generate_parser.add_argument(
         "--validate",
         action=argparse.BooleanOptionalAction,
@@ -324,6 +333,9 @@ def command_generate(args):
     if args.count <= 0:
         raise ValueError("--count must be greater than 0")
 
+    if args.seed is None:
+        args.seed = random.SystemRandom().randint(0, 2**31 - 1)
+
     ensure_ig_layout(args.ig)
     args.input_dir = default_input_dir(args.ig)
     args.output_dir = default_output_dir(args.ig, args.mode)
@@ -338,7 +350,7 @@ def command_generate(args):
         console.print(f"[cyan]Generating[/cyan] {generator.resource_type}...")
         summaries.append(generator.run())
 
-    print_generation_summary(args.ig, args.mode, args.output_dir, summaries)
+    print_generation_summary(args.ig, args.mode, args.output_dir, summaries, args.seed)
 
     if args.validate:
         exit_code = run_fhir_cli_validation(args, summaries)
