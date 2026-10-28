@@ -227,10 +227,18 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
         organization_index = ctx.random.randint(1, organization_pool)
         location_index = ctx.random.randint(1, location_pool)
         endpoint_index = ctx.random.randint(1, endpoint_pool)
+        # Codes must be members of the HCPD "Service Type" value set
+        # (https://healthterminologies.gov.au/fhir/ValueSet/service-type-1); both candidates
+        # previously used here (224929004, 224930009) are not members of that value set and
+        # were being rejected by server-side terminology validation.
         service_type = ctx.random.choice(
             [
-                ("224929004", "Healthcare service"),
-                ("224930009", "Services"),
+                ("224891009", "Healthcare services"),
+                ("310074003", "Pathology service"),
+                ("310123008", "Psychology service"),
+                ("788123009", "Radiation oncology service"),
+                ("789718008", "Cardiology service"),
+                ("788007007", "General practice service"),
             ]
         )
         active_value = self.random_active()
