@@ -51,6 +51,12 @@ By default, each bulk run uses a random seed (not a fixed value), so re-running 
 
 `python3 generate.py generate --ig au-core-2.0.0 --type patient --mode bulk --count 1000 --seed 42`
 
+By default, bulk mode generates IDs starting at index `1` (e.g. `example-healthconnect-organization-1`). Pass `--start-index` to generate a different, non-overlapping ID range instead — useful for extending an existing bulk dataset without overwriting/colliding with IDs from an earlier run, for example to add 1,000 more organizations continuing on from an existing 1-1000 range:
+
+`python3 generate.py generate --ig hcpd-26.0.0 --type organization --mode bulk --count 1000 --start-index 1001`
+
+The resolved index range (e.g. `1001 to 2000`) is printed in the generation summary alongside the seed.
+
 ### Discovery and diagnostics
 
 `python3 generate.py list`
@@ -83,6 +89,7 @@ After that, validation-enabled generation works, for example:
 | `--mode` | Yes | `generate` | Generation mode. Supported values: `csv`, `bulk`. |
 | `--type` | No | `generate` | Resource type to generate. If omitted, CSV mode generates all supported types with matching CSV input; bulk mode generates all supported types for the IG. |
 | `--count` | No | `generate` (bulk) | Number of resources to generate. Default: `100`. |
+| `--start-index` | No | `generate` (bulk) | Starting index for generated IDs/references. Default: `1`. For example, `--start-index 1000 --count 100` generates IDs `...-1000` through `...-1099`, instead of restarting at `1` and colliding with an earlier run's IDs. |
 | `--seed` | No | `generate` (bulk) | Seed for random generation. Default: a random seed is chosen each run (shown in the generation summary). Pass an explicit value, e.g. `--seed 42`, to reproduce the same data on a later run. |
 | `--validate` / `--no-validate` | No | `generate` | Enable or disable post-generation validation using the FHIR validator CLI. Default: `--validate`. |
 | `--validator-level` | No | `generate` | Minimum issue level reported by validator output. Values: `hints`, `warnings`, `errors`. Default: `errors`. |
@@ -108,6 +115,7 @@ Other subcommands:
 | Fail CI when validation errors are found | `python3 generate.py generate --ig hcpd-26.0.0 --mode csv --validate --validator-level errors --fail-on-validation` |
 | Generate bulk NDJSON for all types | `python3 generate.py generate --ig hcpd-26.0.0 --mode bulk --count 100` |
 | Generate reproducible bulk data for one type (fixed seed) | `python3 generate.py generate --ig au-core-2.0.0 --type patient --mode bulk --count 1000 --seed 42` |
+| Extend an existing bulk dataset with non-overlapping IDs | `python3 generate.py generate --ig hcpd-26.0.0 --type organization --mode bulk --count 1000 --start-index 1001` |
 | List supported IGs and resource types | `python3 generate.py list` |
 | List resource types for one IG | `python3 generate.py list --ig hcpd-26.0.0` |
 | Check expected folder layout | `python3 generate.py doctor` |

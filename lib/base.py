@@ -154,7 +154,10 @@ class BaseResourceGenerator:
                 "output_files": output_files,
             }
 
-        resources = [self.build_bulk(index) for index in range(1, self.args.count + 1)]
+        start_index = getattr(self.args, "start_index", 1)
+        resources = [
+            self.build_bulk(index) for index in range(start_index, start_index + self.args.count)
+        ]
         output_path = self.context.write_ndjson(self.resource_type, resources)
         return {
             "resource_type": self.resource_type,

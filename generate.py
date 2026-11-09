@@ -97,7 +97,7 @@ def generators_for_args(args):
     return generators
 
 
-def print_generation_summary(ig, mode, output_dir, summaries, seed):
+def print_generation_summary(ig, mode, output_dir, summaries, seed, start_index=None, count=None):
     summary_table = Table(title="Generation Summary")
     summary_table.add_column("Resource Type", style="cyan")
     summary_table.add_column("Generated", justify="right", style="green")
@@ -111,9 +111,13 @@ def print_generation_summary(ig, mode, output_dir, summaries, seed):
         )
 
     console.print()
+    index_line = ""
+    if mode == "bulk" and start_index is not None and count is not None:
+        index_line = f"Index range: [bold]{start_index}[/bold] to [bold]{start_index + count - 1}[/bold]\n"
     console.print(
         Panel.fit(
             f"IG: [bold]{ig}[/bold]\nMode: [bold]{mode}[/bold]\nOutput: [bold]{output_dir}[/bold]\n"
+            f"{index_line}"
             f"Seed: [bold]{seed}[/bold] (pass --seed {seed} to reproduce this exact data)",
             title="FHIR Test Data Generator",
             border_style="green",
@@ -217,6 +221,15 @@ def parse_args(argv=None):
     generate_parser.add_argument("--ig", required=True, help="The IG package to use")
     generate_parser.add_argument("--mode", required=True, choices=["csv", "bulk"], help="Generation mode")
     generate_parser.add_argument("--count", type=int, default=100, help="Resource count for bulk mode")
+    generate_parser.add_argument(
+        "--start-index",
+        type=int,
+        default=1,
+        help="Starting index for bulk mode resource IDs/references (default: 1). For example, "
+        "--start-index 1000 --count 100 generates IDs example-healthconnect-organization-1000 "
+        "through -1099, instead of overwriting/colliding with an earlier 1-100 (or any other) "
+        "run's IDs. Useful for extending an existing bulk dataset with new, non-overlapping IDs.",
+    )
     generate_parser.add_argument(
         "--seed",
         type=int,
@@ -332,6 +345,8 @@ def command_doctor():
 def command_generate(args):
     if args.count <= 0:
         raise ValueError("--count must be greater than 0")
+    if args.start_index <= 0:
+        raise ValueError("--start-index must be greater than 0")
 
     if args.seed is None:
         args.seed = random.SystemRandom().randint(0, 2**31 - 1)
@@ -350,7 +365,9 @@ def command_generate(args):
         console.print(f"[cyan]Generating[/cyan] {generator.resource_type}...")
         summaries.append(generator.run())
 
-    print_generation_summary(args.ig, args.mode, args.output_dir, summaries, args.seed)
+    print_generation_summary(
+        args.ig, args.mode, args.output_dir, summaries, args.seed, args.start_index, args.count
+    )
 
     if args.validate:
         exit_code = run_fhir_cli_validation(args, summaries)
