@@ -33,7 +33,7 @@ If `--type` is omitted, the generator scans the IG input directory and generates
 
 For HCPD CSV generation, required identifier values must be present; missing values stop generation with the resource ID and field name. Optional identifiers with blank values are omitted rather than emitted without a value.
 
-The HCPD Practitioner CSV supports an optional `active` column. Explicit `true` or `false` values are preserved; a missing or blank value leaves `Practitioner.active` omitted. Linked export seed sets 27 (Darwin) and 28 (Parramatta) use explicit active state and consistent references across Location, Organization, HealthcareService, PractitionerRole, Practitioner and Endpoint.
+The HCPD Practitioner CSV supports an optional `active` column. Explicit `true` or `false` values are preserved; a missing or blank value leaves `Practitioner.active` omitted. Linked Darwin and Parramatta export seed sets use explicit active state and consistent references across Location, Organization, HealthcareService, PractitionerRole, Practitioner and Endpoint; resource numbers differ by type.
 
 Run the focused CSV active-state tests with `python3 -m unittest test_practitioner_csv`.
 
