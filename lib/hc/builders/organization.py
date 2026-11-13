@@ -102,7 +102,7 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
             {
                 "type": abn_type,
                 "system": abn_system,
-                "value": ctx.csv_value(row, "identifier.abn.value"),
+                "value": ctx.required_csv_value(row, "identifier.abn.value"),
             },
             {
                 "type": acn_type,
@@ -110,6 +110,7 @@ class HealthConnectOrganizationGenerator(BaseResourceGenerator):
                 "value": ctx.csv_value(row, "identifier.acn.value"),
             },
         ]
+        identifiers = [identifier for identifier in identifiers if identifier.get("value")]
 
         suppressed_by_code = ctx.csv_value(row, "suppressedBy.code")
         include_self = ctx.csv_value(row, "suppressed.includeSelf")

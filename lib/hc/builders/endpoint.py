@@ -15,7 +15,8 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
         payload_mime_types = [ctx.csv_value(row, f"payloadMimeType{index}") for index in range(1, 4)]
         payload_type_system = ctx.csv_value(row, "payloadType.system")
         source_system = ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_NHSD_SYSTEM
-        source_value = ctx.csv_first(row, "identifier.HCSourceIdentifier.value")
+        source_value = ctx.required_csv_value(row, "identifier.HCSourceIdentifier.value")
+        smd_target_value = ctx.csv_value(row, "identifier.HCSMDTargetIdentifier.value")
         smd_target_system = ctx.csv_first(row, "identifier.HCSMDTargetIdentifier.system") or ctx.SMD_TARGET_IDENTIFIER_SYSTEM
         endpoint_identifier_system = ctx.csv_first(row, "identifier.HCEndpointIdentifier.system") or ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM
         endpoint_identifier_type_system = ctx.csv_first(row, "identifier.HCEndpointIdentifier.type.coding.system") or "http://terminology.hl7.org/CodeSystem/v2-0203"
@@ -54,10 +55,10 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
             },
             "address": ctx.csv_value(row, "address"),
             "identifier": [
-                {
+                *([{
                     "system": smd_target_system,
-                    "value": ctx.csv_value(row, "identifier.HCSMDTargetIdentifier.value"),
-                },
+                    "value": smd_target_value,
+                }] if smd_target_value else []),
                 ctx.build_source_identifier(
                     source_system=source_system,
                     source_value=source_value,
@@ -69,7 +70,7 @@ class HealthConnectEndpointGenerator(BaseResourceGenerator):
                         text=endpoint_identifier_type_text,
                     ),
                     "system": endpoint_identifier_system,
-                    "value": ctx.csv_value(row, "identifier.HCEndpointIdentifier.value"),
+                    "value": ctx.required_csv_value(row, "identifier.HCEndpointIdentifier.value"),
                 },
             ],
             "payloadType": [

@@ -31,6 +31,12 @@ Backward compatibility is preserved, so existing commands without the `generate`
 CSV mode reads CSV files from the selected IG input directory and writes FHIR resources to `output/<ig-name>/csv/`.
 If `--type` is omitted, the generator scans the IG input directory and generates every supported resource that has a matching input CSV.
 
+For HCPD CSV generation, required identifier values must be present; missing values stop generation with the resource ID and field name. Optional identifiers with blank values are omitted rather than emitted without a value.
+
+The HCPD Practitioner CSV supports an optional `active` column. Explicit `true` or `false` values are preserved; a missing or blank value leaves `Practitioner.active` omitted. Linked export seed sets 27 (Darwin) and 28 (Parramatta) use explicit active state and consistent references across Location, Organization, HealthcareService, PractitionerRole, Practitioner and Endpoint.
+
+Run the focused CSV active-state tests with `python3 -m unittest test_practitioner_csv`.
+
 Examples:
 
 `python3 generate.py generate --ig au-core-2.0.0 --mode csv`

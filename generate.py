@@ -112,13 +112,16 @@ def print_generation_summary(ig, mode, output_dir, summaries, seed, start_index=
 
     console.print()
     index_line = ""
+    seed_line = ""
     if mode == "bulk" and start_index is not None and count is not None:
         index_line = f"Index range: [bold]{start_index}[/bold] to [bold]{start_index + count - 1}[/bold]\n"
+    if mode == "bulk":
+        seed_line = f"Seed: [bold]{seed}[/bold] (pass --seed {seed} to reproduce this exact data)"
     console.print(
         Panel.fit(
             f"IG: [bold]{ig}[/bold]\nMode: [bold]{mode}[/bold]\nOutput: [bold]{output_dir}[/bold]\n"
             f"{index_line}"
-            f"Seed: [bold]{seed}[/bold] (pass --seed {seed} to reproduce this exact data)",
+            f"{seed_line}",
             title="FHIR Test Data Generator",
             border_style="green",
         )

@@ -30,6 +30,12 @@ class HealthConnectContext(ProfileContext):
             os.path.join(self.input_dir, "health-connect-26.0.0", file_name),
         ]
 
+    def required_csv_value(self, row, key):
+        value = self.csv_value(row, key)
+        if not value:
+            raise ValueError(f"Missing required CSV field {key} for resource {self.csv_value(row, 'resource.id')}")
+        return value
+
     def normalize_token(self, value):
         text = str(value).strip()
         if text.startswith("#"):

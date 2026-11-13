@@ -13,7 +13,7 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
     def build_from_row(self, row):
         ctx = self.context
         source_system = ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM
-        source_value = ctx.csv_first(row, "identifier.HCSourceIdentifier.value")
+        source_value = ctx.required_csv_value(row, "identifier.HCSourceIdentifier.value")
 
         address_identifier_value = ctx.csv_value(row, "address.valueIdentifier.value")
         address_extensions = []
@@ -109,7 +109,7 @@ class HealthConnectLocationGenerator(BaseResourceGenerator):
                         text=ctx.csv_first(row, "identifier.type.text", "identifier.type"),
                     ),
                     "system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM,
-                    "value": ctx.csv_value(row, "identifier.value"),
+                    "value": ctx.required_csv_value(row, "identifier.value"),
                 }
             ],
             "status": ctx.csv_first(row, "status") or "active",

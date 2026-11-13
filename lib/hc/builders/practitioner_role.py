@@ -17,12 +17,12 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
         identifiers = [
             ctx.build_source_identifier(
                 source_system=ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM,
-                source_value=ctx.csv_first(row, "identifier.HCSourceIdentifier.value"),
+                source_value=ctx.required_csv_value(row, "identifier.HCSourceIdentifier.value"),
             ),
             {
                 "type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "XX", "display": "Organization identifier"}]},
                 "system": "http://digitalhealth.gov.au/fhir/hcpd/id/hcpd-local-identifier",
-                "value": ctx.csv_value(row, "identifier.HCLocalIdentifier.value"),
+                "value": ctx.required_csv_value(row, "identifier.HCLocalIdentifier.value"),
             },
             {
                 "type": {"coding": [{"system": "http://terminology.hl7.org.au/CodeSystem/v2-0203", "code": "UPIN", "display": "Medicare Provider Number"}]},
@@ -35,6 +35,7 @@ class HealthConnectPractitionerRoleGenerator(BaseResourceGenerator):
                 "value": ctx.csv_value(row, "identifier.ahpraregistrationnumber.value"),
             },
         ]
+        identifiers = [identifier for identifier in identifiers if identifier.get("value")]
 
         telecom = []
         for prefix in ("telecom", "telecom2"):

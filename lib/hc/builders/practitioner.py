@@ -48,7 +48,7 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
         name_text = " ".join(part for part in [prefix, given_name, family_name] if part)
 
         identifiers = []
-        hpii_value = ctx.csv_value(row, "identifier.hpii.value")
+        hpii_value = ctx.required_csv_value(row, "identifier.hpii.value")
         hpii_status_code = ctx.csv_value(row, "identifier.hpii.status.code")
         hpii_status_display = ctx.csv_value(row, "identifier.hpii.status.display")
         hpii_status_system = ctx.csv_value(row, "identifier.hpii.status.system")
@@ -138,6 +138,10 @@ class HealthConnectPractitionerGenerator(BaseResourceGenerator):
             ],
             "qualification": [self.build_default_qualification(row, practitioner_id)],
         }
+
+        active = ctx.csv_value(row, "active")
+        if active:
+            practitioner["active"] = ctx.bool_value(active)
 
         gender_identity_code = ctx.csv_value(row, "genderIdentity.code")
         gender_identity_display = ctx.csv_value(row, "genderIdentity.display")

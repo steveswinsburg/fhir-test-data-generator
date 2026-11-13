@@ -18,7 +18,7 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
         start_value, start_extension = ctx.make_time_extension(ctx.csv_value(row, "availableStartTime"), ctx.csv_value(row, "timeZone"))
         end_value, end_extension = ctx.make_time_extension(ctx.csv_value(row, "availableEndTime"), ctx.csv_value(row, "timeZone"))
         source_system = ctx.csv_first(row, "identifier.HCSourceIdentifier.system") or ctx.SOURCE_PCA_SYSTEM
-        source_value = ctx.csv_first(row, "identifier.HCSourceIdentifier.value")
+        source_value = ctx.required_csv_value(row, "identifier.HCSourceIdentifier.value")
         type_system = ctx.csv_value(row, "type.system")
         type_code = ctx.csv_value(row, "type.code")
         type_display = ctx.csv_value(row, "type.display")
@@ -190,7 +190,7 @@ class HealthConnectHealthcareServiceGenerator(BaseResourceGenerator):
                 {
                     "type": ctx.build_identifier_type(code="XX", system="http://terminology.hl7.org/CodeSystem/v2-0203", text="Organization identifier"),
                     "system": ctx.HCPD_LOCAL_IDENTIFIER_SYSTEM,
-                    "value": ctx.csv_value(row, "identifier.value"),
+                    "value": ctx.required_csv_value(row, "identifier.value"),
                 }
             ],
             "active": ctx.bool_value(ctx.csv_first(row, "active") or "true"),
